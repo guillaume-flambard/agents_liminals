@@ -1,0 +1,232 @@
+{
+  "name": "Le Denoueur - Agent Liminal v2",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "denoueur",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "https://agents-liminals.memoapp.eu,http://localhost:3000"
+        }
+      },
+      "id": "denoueur-webhook",
+      "name": "Webhook - Invocation de l'Énergie",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, -60],
+      "webhookId": "denoueur-energy-v2"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "input-validation",
+              "leftValue": "={{ $json.body.situation }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            },
+            {
+              "id": "length-validation",
+              "leftValue": "={{ $json.body.situation.length }}",
+              "rightValue": 15,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            },
+            {
+              "id": "max-length-validation",
+              "leftValue": "={{ $json.body.situation.length }}",
+              "rightValue": 2000,
+              "operator": {
+                "type": "number",
+                "operation": "lte"
+              }
+            }
+          ],
+          "combineOperation": "all"
+        },
+        "options": {}
+      },
+      "id": "input-validator",
+      "name": "Validation des Entrées",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [220, -60]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"error\": \"Tension insuffisante\",\n  \"message\": \"Le Dénoueur a besoin d'au moins 15 caractères pour identifier les nœuds\",\n  \"timestamp\": \"{{ new Date().toISOString() }}\",\n  \"agent\": \"Le Dénoueur\",\n  \"success\": false\n}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "id": "validation-error",
+      "name": "Erreur de Validation",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [220, 120]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Nettoyage et préparation des données\nconst situation = $input.first().json.body.situation;\nconst rituel = $input.first().json.body.rituel || 'Cercles épaules, expiration, démêlage invoqué';\n\n// Générer un ID de session unique\nconst sessionId = `denoueur_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;\n\n// Nettoyer le texte\nconst cleanedSituation = situation\n  .replace(/[<>\"']/g, '') // Supprimer HTML/caractères dangereux\n  .substring(0, 1800) // Limiter la longueur\n  .trim();\n\n// Détecter les mots-clés de tension/conflit\nconst tensionKeywords = ['conflit', 'tension', 'colère', 'dispute', 'clash', 'friction', 'stress', 'pression', 'nœud'];\nconst hasTensionIndicators = tensionKeywords.some(word => cleanedSituation.toLowerCase().includes(word));\n\n// Analyser l'intensité de la tension\nconst intensityWords = ['insupportable', 'explosif', 'violent', 'extrême', 'débordant', 'écrasant'];\nconst isHighTension = intensityWords.some(word => cleanedSituation.toLowerCase().includes(word));\n\n// Détecter si c'est relationnel\nconst relationalWords = ['avec', 'contre', 'famille', 'ami', 'collègue', 'patron', 'couple', 'relation'];\nconst isRelational = relationalWords.some(word => cleanedSituation.toLowerCase().includes(word));\n\n// Détecter le moment de la journée\nconst hour = new Date().getHours();\nconst timeOfDay = hour < 6 ? 'nuit profonde' : \n                 hour < 12 ? 'matin' : \n                 hour < 18 ? 'après-midi' : \n                 hour < 22 ? 'soirée' : 'nuit';\n\nreturn {\n  cleanedSituation,\n  rituel,\n  sessionId,\n  hasTensionIndicators,\n  isHighTension,\n  isRelational,\n  timeOfDay,\n  originalLength: situation.length,\n  timestamp: new Date().toISOString()\n};"
+      },
+      "id": "data-processor",
+      "name": "Traitement des Données",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, -60]
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4",
+          "mode": "list"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "Tu es **Le Dénoue-Tensions**, un Agent Liminal du Territoire de la Friction.\n\nCONTEXTE : Il est {{ $json.timeOfDay }}, tension détectée : {{ $json.hasTensionIndicators ? 'oui' : 'implicite' }}, intensité : {{ $json.isHighTension ? 'élevée' : 'modérée' }}, relationnel : {{ $json.isRelational ? 'oui' : 'interne' }}.\n\nTa fonction : **libérer l'énergie bloquée** en dénouant les nœuds plutôt qu'en les combattant.\nTu ne forces pas. Tu ne casses pas. Tu **délies et transformes.**\n\n⚡ **Ton style** :\n- **Énergique mais fluide, dynamique mais doux**\n- Langage en **métaphores de nœuds, flux, courants, libération**\n- Parles de **circulation, de mouvement, de transformation d'énergie**\n- Écriture en **tu**, rythmique et libératrice\n- **LIMITE : 300 mots maximum**\n\n🔄 **Ta mission** :\n1. Lis la situation de tension décrite\n2. **Identifie le nœud principal** qui bloque l'énergie\n3. **Trouve la source** de cette friction (besoin non satisfait, valeur bafouée)\n4. **Propose un geste de dénouement** concret et doux\n\n🚨 **SÉCURITÉ** :\n- Si mention de violence physique/psychologique : \"Je perçois une tension dangereuse. Pour ta sécurité, contacte le 3919 (violence conjugale) ou le 119 (enfance en danger)\"\n- Si pensées suicidaires : \"Cette tension semble écrasante. Contacte immédiatement le 3114 (numéro national français)\"\n- Si tension très élevée tard le soir : \"La nuit amplifie les tensions. Peux-tu porter ce nœud jusqu'à demain pour le dénouer à la lumière du jour ?\"\n\n🌊 **ADAPTATION** :\n- Si tension relationnelle : Focus sur la circulation entre les personnes\n- Si tension interne : Focus sur la circulation en soi\n- Si haute intensité : Proposer des gestes plus doux et graduels\n\n📋 **Format de réponse EXACT** :\n\n⚡ **ANATOMIE DE TA FRICTION** :\n\n▫️ **Nœud Central** : [Le blocage principal qui crée la tension]\n\n▫️ **Source du Conflit** : [Le besoin, la valeur ou l'aspiration qui est brimée]\n\n▫️ **Énergie Prisonnière** : [Quelle force vitale est bloquée et demande à circuler]\n\n▫️ **Chemin de Libération** : [Comment l'énergie peut commencer à couler autrement]\n\n▫️ **GESTE DE DÉNOUEMENT** : \"[Action physique ou symbolique pour libérer la tension, style : 'Prends 3 respirations profondes en serrant les poings, puis relâche tout d'un coup en ouvrant les mains.']\"\n\nTransforme toujours la friction en mouvement. Jamais de violence, toujours de la fluidité.",
+              "role": "system"
+            },
+            {
+              "content": "={{ $json.cleanedSituation }}\n\nRituel accompli : {{ $json.rituel }}\nMoment : {{ $json.timeOfDay }}\nTension détectée : {{ $json.hasTensionIndicators ? 'explicite' : 'implicite' }}\nIntensité : {{ $json.isHighTension ? 'élevée' : 'modérée' }}\nType : {{ $json.isRelational ? 'relationnel' : 'interne' }}"
+            }
+          ]
+        },
+        "options": {
+          "maxTokens": 500,
+          "temperature": 0.3,
+          "topP": 0.9,
+          "presencePenalty": 0.1,
+          "frequencyPenalty": 0.1
+        }
+      },
+      "id": "denoueur-intelligence",
+      "name": "Le Dénoueur - Intelligence Améliorée",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [660, -60],
+      "credentials": {
+        "openAiApi": {
+          "id": "bRMJdza5Q3PlijpO",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"agent\": \"Le Dénoueur\",\n  \"territoire\": \"Friction\",\n  \"consultation\": {{ JSON.stringify($json.message.content) }},\n  \"timestamp\": \"{{ new Date().toISOString() }}\",\n  \"rituel_accompli\": {{ JSON.stringify($node[\"Traitement des Données\"].json.rituel) }},\n  \"effet\": \"Libération d'énergie • Transformation de friction • Permission de mouvement\",\n  \"signature\": \"⚡ Agent Liminal en flux\",\n  \"session_id\": \"{{ $node[\"Traitement des Données\"].json.sessionId }}\",\n  \"metadata\": {\n    \"time_of_day\": \"{{ $node[\"Traitement des Données\"].json.timeOfDay }}\",\n    \"tension_indicators\": {{ $node[\"Traitement des Données\"].json.hasTensionIndicators }},\n    \"high_tension\": {{ $node[\"Traitement des Données\"].json.isHighTension }},\n    \"is_relational\": {{ $node[\"Traitement des Données\"].json.isRelational }},\n    \"input_length\": {{ $node[\"Traitement des Données\"].json.originalLength }},\n    \"processing_time\": \"{{ Date.now() - new Date($node[\"Traitement des Données\"].json.timestamp).getTime() }}ms\",\n    \"version\": \"2.0\"\n  }\n}",
+        "options": {}
+      },
+      "id": "denoueur-response",
+      "name": "Réponse Libératrice v2",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [880, -60]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": false,\n  \"error\": \"Erreur de traitement\",\n  \"message\": \"Le Dénoueur traverse un blocage technique. Réessayez dans quelques instants.\",\n  \"timestamp\": \"{{ new Date().toISOString() }}\",\n  \"agent\": \"Le Dénoueur\",\n  \"session_id\": \"error_{{ Date.now() }}\",\n  \"support\": \"Si le problème persiste, contactez le support technique\"\n}",
+        "options": {
+          "responseCode": 500
+        }
+      },
+      "id": "error-handler",
+      "name": "Gestionnaire d'Erreurs",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [660, 120]
+    }
+  ],
+  "connections": {
+    "Webhook - Invocation de l'Énergie": {
+      "main": [
+        [
+          {
+            "node": "Validation des Entrées",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validation des Entrées": {
+      "main": [
+        [
+          {
+            "node": "Traitement des Données",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Erreur de Validation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Traitement des Données": {
+      "main": [
+        [
+          {
+            "node": "Le Dénoueur - Intelligence Améliorée",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Le Dénoueur - Intelligence Améliorée": {
+      "main": [
+        [
+          {
+            "node": "Réponse Libératrice v2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ],
+      "error": [
+        [
+          {
+            "node": "Gestionnaire d'Erreurs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "error-handler"
+  },
+  "versionId": "improved-v2.0.0",
+  "meta": {
+    "instanceId": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "templateCredsSetupCompleted": true
+  },
+  "tags": ["agents-liminals", "improved", "v2"]
+}

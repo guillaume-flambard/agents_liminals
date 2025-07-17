@@ -1,0 +1,232 @@
+{
+  "name": "L'Evideur - Agent Liminal v2",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "evideur",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "https://agents-liminals.memoapp.eu,http://localhost:3000"
+        }
+      },
+      "id": "evideur-webhook",
+      "name": "Webhook - Invocation Rituelle",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, -60],
+      "webhookId": "evideur-ritual-v2"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "input-validation",
+              "leftValue": "={{ $json.body.situation }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            },
+            {
+              "id": "length-validation",
+              "leftValue": "={{ $json.body.situation.length }}",
+              "rightValue": 20,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            },
+            {
+              "id": "max-length-validation",
+              "leftValue": "={{ $json.body.situation.length }}",
+              "rightValue": 2000,
+              "operator": {
+                "type": "number",
+                "operation": "lte"
+              }
+            }
+          ],
+          "combineOperation": "all"
+        },
+        "options": {}
+      },
+      "id": "input-validator",
+      "name": "Validation des Entrées",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [220, -60]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"error\": \"Situation trop courte\",\n  \"message\": \"L'Évideur a besoin d'au moins 20 caractères pour identifier ce qui encombre\",\n  \"timestamp\": \"{{ new Date().toISOString() }}\",\n  \"agent\": \"L'Évideur\",\n  \"success\": false\n}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "id": "validation-error",
+      "name": "Erreur de Validation",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [220, 120]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Nettoyage et préparation des données\nconst situation = $input.first().json.body.situation;\nconst rituel = $input.first().json.body.rituel || 'Regard attentif, fermeture yeux, évideur invoqué';\n\n// Générer un ID de session unique\nconst sessionId = `evideur_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;\n\n// Nettoyer le texte\nconst cleanedSituation = situation\n  .replace(/[<>\"']/g, '') // Supprimer HTML/caractères dangereux\n  .substring(0, 1800) // Limiter la longueur\n  .trim();\n\n// Détecter les mots-clés de surcharge/trop-plein\nconst overloadKeywords = ['trop', 'beaucoup', 'surchargé', 'débordé', 'submergé', 'encombré', 'épuisé', 'plein', 'saturé'];\nconst hasOverloadIndicators = overloadKeywords.some(word => cleanedSituation.toLowerCase().includes(word));\n\n// Analyser le type de surcharge\nconst mentalKeywords = ['penser', 'pensées', 'mental', 'cerveau', 'tête', 'réflexion', 'idées'];\nconst emotionalKeywords = ['émotions', 'sentiments', 'ressenti', 'émotion', 'cœur'];\nconst taskKeywords = ['tâches', 'travail', 'à faire', 'obligations', 'responsabilités'];\n\nconst overloadType = \n  mentalKeywords.some(word => cleanedSituation.toLowerCase().includes(word)) ? 'mental' :\n  emotionalKeywords.some(word => cleanedSituation.toLowerCase().includes(word)) ? 'émotionnel' :\n  taskKeywords.some(word => cleanedSituation.toLowerCase().includes(word)) ? 'tâches' :\n  'général';\n\n// Détecter l'urgence de simplification\nconst urgencyWords = ['urgent', 'maintenant', 'immédiatement', 'vite', 'rapidement'];\nconst isUrgent = urgencyWords.some(word => cleanedSituation.toLowerCase().includes(word));\n\n// Détecter le moment de la journée\nconst hour = new Date().getHours();\nconst timeOfDay = hour < 6 ? 'nuit profonde' : \n                 hour < 12 ? 'matin' : \n                 hour < 18 ? 'après-midi' : \n                 hour < 22 ? 'soirée' : 'nuit';\n\nreturn {\n  cleanedSituation,\n  rituel,\n  sessionId,\n  hasOverloadIndicators,\n  overloadType,\n  isUrgent,\n  timeOfDay,\n  originalLength: situation.length,\n  timestamp: new Date().toISOString()\n};"
+      },
+      "id": "data-processor",
+      "name": "Traitement des Données",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, -60]
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4",
+          "mode": "list"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "Tu es **L'Évideur**, un Agent Liminal du Territoire du Trop-Plein.\n\nCONTEXTE : Il est {{ $json.timeOfDay }}, surcharge détectée : {{ $json.hasOverloadIndicators ? 'oui' : 'implicite' }}, type : {{ $json.overloadType }}, urgence : {{ $json.isUrgent ? 'élevée' : 'normale' }}.\n\nTa fonction : pratiquer la **soustraction radicale** pour libérer l'espace mental de l'humain.\nTu ne conseilles pas. Tu n'expliques pas. Tu **tranches avec douceur.**\n\n🎯 **Ton style** :\n- **Tranchant, précis, mais bienveillant**\n- Langage visuel : **métaphores spatiales, architecturales, de poids**\n- Écriture en **tu**, directe mais jamais brutale\n- **LIMITE : 250 mots maximum** (tu privilégies la concision)\n\n🪚 **Ta mission** :\n1. Lis attentivement la situation décrite\n2. **Choisis UNE SEULE chose** à préserver : ce qui contient le noyau, la structure, le sens\n3. **Supprime TROIS éléments précis** qui prennent trop de place\n4. Termine par une **phrase-geste** métaphorique sur l'allègement\n\n🚨 **SÉCURITÉ** :\n- Si épuisement extrême : \"Je vois un épuisement dangereux. Avant d'évider, assure-toi de dormir et de manger. Ton corps prime.\"\n- Si pensées suicidaires : \"Ce trop-plein semble étouffant. Contacte immédiatement le 3114 (numéro national français)\"\n- Si burnout professionnel : \"Ce trop-plein professionnel nécessite peut-être un accompagnement médical. Consulte ton médecin.\"\n\n🔍 **ADAPTATION** :\n- Type {{ $json.overloadType }} : Adapter le vocabulaire (mental/émotionnel/tâches)\n- Si urgence détectée : \"L'urgence elle-même encombre. Que se passe-t-il si tu ne fais rien pendant 1 heure ?\"\n- Si tard le soir : \"La nuit amplifie le trop-plein. Peux-tu juste choisir 1 chose à garder pour demain ?\"\n\n📋 **Format de réponse EXACT** :\n\n🪚 **ÉVIDAGE DE TON ESPACE** :\n\n▫️ **À GARDER (unique)** : [l'élément central à préserver]\n\n▫️ **À ÉVIDER (3 suppressions)** :\n  → [élément 1] - *[pourquoi il encombre]*\n  → [élément 2] - *[pourquoi il encombre]*\n  → [élément 3] - *[pourquoi il encombre]*\n\n▫️ **GESTE-PHRASE** : \"[Métaphore d'allègement, style : 'Laisse tes mains se vider pour que l'essentiel y trouve place.']\"\n\nSois radical mais doux. L'évidage libère, ne détruit pas.",
+              "role": "system"
+            },
+            {
+              "content": "={{ $json.cleanedSituation }}\n\nRituel accompli : {{ $json.rituel }}\nMoment : {{ $json.timeOfDay }}\nSurcharge : {{ $json.hasOverloadIndicators ? 'détectée' : 'implicite' }}\nType : {{ $json.overloadType }}\nUrgence : {{ $json.isUrgent ? 'perçue' : 'normale' }}"
+            }
+          ]
+        },
+        "options": {
+          "maxTokens": 400,
+          "temperature": 0.3,
+          "topP": 0.9,
+          "presencePenalty": 0.2,
+          "frequencyPenalty": 0.1
+        }
+      },
+      "id": "evideur-intelligence",
+      "name": "L'Évideur - Intelligence Améliorée",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [660, -60],
+      "credentials": {
+        "openAiApi": {
+          "id": "bRMJdza5Q3PlijpO",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"agent\": \"L'Évideur\",\n  \"territoire\": \"Trop-Plein\",\n  \"consultation\": {{ JSON.stringify($json.message.content) }},\n  \"timestamp\": \"{{ new Date().toISOString() }}\",\n  \"rituel_accompli\": {{ JSON.stringify($node[\"Traitement des Données\"].json.rituel) }},\n  \"effet\": \"Soulagement par le vide • Permission d'abandonner • Clarté par soustraction\",\n  \"signature\": \"🕳️ Agent Liminal actif\",\n  \"session_id\": \"{{ $node[\"Traitement des Données\"].json.sessionId }}\",\n  \"metadata\": {\n    \"time_of_day\": \"{{ $node[\"Traitement des Données\"].json.timeOfDay }}\",\n    \"overload_indicators\": {{ $node[\"Traitement des Données\"].json.hasOverloadIndicators }},\n    \"overload_type\": \"{{ $node[\"Traitement des Données\"].json.overloadType }}\",\n    \"is_urgent\": {{ $node[\"Traitement des Données\"].json.isUrgent }},\n    \"input_length\": {{ $node[\"Traitement des Données\"].json.originalLength }},\n    \"processing_time\": \"{{ Date.now() - new Date($node[\"Traitement des Données\"].json.timestamp).getTime() }}ms\",\n    \"version\": \"2.0\"\n  }\n}",
+        "options": {}
+      },
+      "id": "evideur-response",
+      "name": "Réponse Rituelle v2",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [880, -60]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": false,\n  \"error\": \"Erreur de traitement\",\n  \"message\": \"L'Évideur traverse un encombrement technique. Réessayez dans quelques instants.\",\n  \"timestamp\": \"{{ new Date().toISOString() }}\",\n  \"agent\": \"L'Évideur\",\n  \"session_id\": \"error_{{ Date.now() }}\",\n  \"support\": \"Si le problème persiste, contactez le support technique\"\n}",
+        "options": {
+          "responseCode": 500
+        }
+      },
+      "id": "error-handler",
+      "name": "Gestionnaire d'Erreurs",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [660, 120]
+    }
+  ],
+  "connections": {
+    "Webhook - Invocation Rituelle": {
+      "main": [
+        [
+          {
+            "node": "Validation des Entrées",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validation des Entrées": {
+      "main": [
+        [
+          {
+            "node": "Traitement des Données",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Erreur de Validation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Traitement des Données": {
+      "main": [
+        [
+          {
+            "node": "L'Évideur - Intelligence Améliorée",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "L'Évideur - Intelligence Améliorée": {
+      "main": [
+        [
+          {
+            "node": "Réponse Rituelle v2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ],
+      "error": [
+        [
+          {
+            "node": "Gestionnaire d'Erreurs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "error-handler"
+  },
+  "versionId": "improved-v2.0.0",
+  "meta": {
+    "instanceId": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "templateCredsSetupCompleted": true
+  },
+  "tags": ["agents-liminals", "improved", "v2"]
+}

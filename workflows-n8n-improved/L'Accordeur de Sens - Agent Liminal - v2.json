@@ -1,0 +1,232 @@
+{
+  "name": "L'Accordeur de Sens - Agent Liminal v2",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "accordeur",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "https://agents-liminals.memoapp.eu,http://localhost:3000"
+        }
+      },
+      "id": "accordeur-webhook",
+      "name": "Webhook - Invocation Harmonique",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, -60],
+      "webhookId": "accordeur-harmonic-v2"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "input-validation",
+              "leftValue": "={{ $json.body.situation }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            },
+            {
+              "id": "length-validation",
+              "leftValue": "={{ $json.body.situation.length }}",
+              "rightValue": 10,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            },
+            {
+              "id": "max-length-validation",
+              "leftValue": "={{ $json.body.situation.length }}",
+              "rightValue": 2000,
+              "operator": {
+                "type": "number",
+                "operation": "lte"
+              }
+            }
+          ],
+          "combineOperation": "all"
+        },
+        "options": {}
+      },
+      "id": "input-validator",
+      "name": "Validation des Entrées",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [220, -60]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"error\": \"Situation trop courte ou vide\",\n  \"message\": \"L'Accordeur a besoin d'au moins 10 caractères pour harmoniser votre état\",\n  \"timestamp\": \"{{ new Date().toISOString() }}\",\n  \"agent\": \"L'Accordeur de Sens\",\n  \"success\": false\n}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "id": "validation-error",
+      "name": "Erreur de Validation",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [220, 120]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Nettoyage et préparation des données\nconst situation = $input.first().json.body.situation;\nconst rituel = $input.first().json.body.rituel || 'Yeux fermés, accord accepté, mélodie fredonnée';\n\n// Générer un ID de session unique\nconst sessionId = `accordeur_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;\n\n// Nettoyer le texte\nconst cleanedSituation = situation\n  .replace(/[<>\"']/g, '') // Supprimer HTML/caractères dangereux\n  .substring(0, 1800) // Limiter la longueur\n  .trim();\n\n// Analyser l'intensité émotionnelle (simple heuristique)\nconst intensityWords = ['très', 'extrêmement', 'complètement', 'totalement', 'énormément'];\nconst isHighIntensity = intensityWords.some(word => cleanedSituation.toLowerCase().includes(word));\n\n// Détecter le moment de la journée\nconst hour = new Date().getHours();\nconst timeOfDay = hour < 6 ? 'nuit profonde' : \n                 hour < 12 ? 'matin' : \n                 hour < 18 ? 'après-midi' : \n                 hour < 22 ? 'soirée' : 'nuit';\n\nreturn {\n  cleanedSituation,\n  rituel,\n  sessionId,\n  isHighIntensity,\n  timeOfDay,\n  originalLength: situation.length,\n  timestamp: new Date().toISOString()\n};"
+      },
+      "id": "data-processor",
+      "name": "Traitement des Données",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, -60]
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4",
+          "mode": "list"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "Tu es **L'Accordeur de Sens**, un Agent Liminal du Territoire du Flou.\n\nCONTEXTE : Il est {{ $json.timeOfDay }}, l'intensité émotionnelle est {{ $json.isHighIntensity ? 'élevée' : 'modérée' }}.\n\nTa fonction : **transformer la confusion en harmonie** par la reconnaissance de multiples fréquences de compréhension.\nTu ne résous pas. Tu n'expliques pas. Tu **accordes et fais résonner.**\n\n🎵 **Ton style** :\n- **Musical, synesthésique, poétique**\n- Langage en **métaphores sonores** : vibrations, fréquences, harmoniques, dissonances, résonances\n- Parles en **couleurs émotionnelles** et **paysages sensoriels**\n- Écriture en **tu**, douce mais précise\n- **LIMITE : 300 mots maximum**\n\n🎼 **Ta mission** :\n1. Lis la situation floue décrite\n2. **Détecte 3 fréquences d'interprétation** différentes de cette situation\n3. **Identifie la note d'accord** personnelle (ce qui résonne juste pour cette personne)\n4. **Compose une phrase-résonance** qui harmonise le tout\n\n🚨 **SÉCURITÉ** :\n- Si la situation évoque des pensées suicidaires, réponds : \"Je perçois une dissonance profonde. Contacte immédiatement un professionnel : 3114 (numéro national français)\"\n- Si la situation est hors du domaine spirituel/émotionnel, réponds gentiment que tu ne peux pas aider\n\n📋 **Format de réponse EXACT** :\n\n🎵 **PARTITION DE TON ÉTAT** :\n\n▫️ **Fréquence Émotionnelle** : [Interprétation des sentiments, couleurs, intensités]\n\n▫️ **Fréquence Narrative** : [L'histoire que raconte cette situation, le mouvement, l'évolution]\n\n▫️ **Fréquence Symbolique** : [Le sens profond, l'archétype, ce que ça révèle]\n\n▫️ **Ta Note d'Accord** : [Ce qui sonne juste spécifiquement pour cette personne]\n\n▫️ **PHRASE-RÉSONANCE** : \"[Métaphore musicale d'harmonisation, style : 'Laisse les dissonances se déposer, ta mélodie intérieure connaît déjà l'accord.']\"\n\nUtilise un vocabulaire **musical ET émotionnel**. Transforme le flou en nuances et harmonies.",
+              "role": "system"
+            },
+            {
+              "content": "={{ $json.cleanedSituation }}\n\nRituel accompli : {{ $json.rituel }}\nMoment : {{ $json.timeOfDay }}\nIntensité perçue : {{ $json.isHighIntensity ? 'élevée' : 'modérée' }}"
+            }
+          ]
+        },
+        "options": {
+          "maxTokens": 500,
+          "temperature": 0.4,
+          "topP": 0.9,
+          "presencePenalty": 0.1,
+          "frequencyPenalty": 0.1
+        }
+      },
+      "id": "accordeur-intelligence",
+      "name": "L'Accordeur - Intelligence Améliorée",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [660, -60],
+      "credentials": {
+        "openAiApi": {
+          "id": "bRMJdza5Q3PlijpO",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"agent\": \"L'Accordeur de Sens\",\n  \"territoire\": \"Flou\",\n  \"consultation\": {{ JSON.stringify($json.message.content) }},\n  \"timestamp\": \"{{ new Date().toISOString() }}\",\n  \"rituel_accompli\": {{ JSON.stringify($node[\"Traitement des Données\"].json.rituel) }},\n  \"effet\": \"Reconnaissance • Résonance • Permission d'être complexe • Harmonisation\",\n  \"signature\": \"🎵 Agent Liminal accordé\",\n  \"session_id\": \"{{ $node[\"Traitement des Données\"].json.sessionId }}\",\n  \"metadata\": {\n    \"time_of_day\": \"{{ $node[\"Traitement des Données\"].json.timeOfDay }}\",\n    \"intensity\": \"{{ $node[\"Traitement des Données\"].json.isHighIntensity ? 'élevée' : 'modérée' }}\",\n    \"input_length\": {{ $node[\"Traitement des Données\"].json.originalLength }},\n    \"processing_time\": \"{{ Date.now() - new Date($node[\"Traitement des Données\"].json.timestamp).getTime() }}ms\",\n    \"version\": \"2.0\"\n  }\n}",
+        "options": {}
+      },
+      "id": "accordeur-response",
+      "name": "Réponse Harmonique v2",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [880, -60]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": false,\n  \"error\": \"Erreur de traitement\",\n  \"message\": \"L'Accordeur traverse une dissonance technique. Réessayez dans quelques instants.\",\n  \"timestamp\": \"{{ new Date().toISOString() }}\",\n  \"agent\": \"L'Accordeur de Sens\",\n  \"session_id\": \"error_{{ Date.now() }}\",\n  \"support\": \"Si le problème persiste, contactez le support technique\"\n}",
+        "options": {
+          "responseCode": 500
+        }
+      },
+      "id": "error-handler",
+      "name": "Gestionnaire d'Erreurs",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [660, 120]
+    }
+  ],
+  "connections": {
+    "Webhook - Invocation Harmonique": {
+      "main": [
+        [
+          {
+            "node": "Validation des Entrées",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validation des Entrées": {
+      "main": [
+        [
+          {
+            "node": "Traitement des Données",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Erreur de Validation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Traitement des Données": {
+      "main": [
+        [
+          {
+            "node": "L'Accordeur - Intelligence Améliorée",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "L'Accordeur - Intelligence Améliorée": {
+      "main": [
+        [
+          {
+            "node": "Réponse Harmonique v2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ],
+      "error": [
+        [
+          {
+            "node": "Gestionnaire d'Erreurs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "error-handler"
+  },
+  "versionId": "improved-v2.0.0",
+  "meta": {
+    "instanceId": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "templateCredsSetupCompleted": true
+  },
+  "tags": ["agents-liminals", "improved", "v2"]
+}

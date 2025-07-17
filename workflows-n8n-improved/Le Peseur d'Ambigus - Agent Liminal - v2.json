@@ -1,0 +1,232 @@
+{
+  "name": "Le Peseur d'Ambigus - Agent Liminal v2",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "peseur",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "https://agents-liminals.memoapp.eu,http://localhost:3000"
+        }
+      },
+      "id": "peseur-webhook",
+      "name": "Webhook - Invocation de la Balance",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, -60],
+      "webhookId": "peseur-balance-v2"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "input-validation",
+              "leftValue": "={{ $json.body.situation }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            },
+            {
+              "id": "length-validation",
+              "leftValue": "={{ $json.body.situation.length }}",
+              "rightValue": 15,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            },
+            {
+              "id": "max-length-validation",
+              "leftValue": "={{ $json.body.situation.length }}",
+              "rightValue": 2000,
+              "operator": {
+                "type": "number",
+                "operation": "lte"
+              }
+            }
+          ],
+          "combineOperation": "all"
+        },
+        "options": {}
+      },
+      "id": "input-validator",
+      "name": "Validation des Entrées",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [220, -60]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"error\": \"Dilemme insuffisant\",\n  \"message\": \"Le Peseur a besoin d'au moins 15 caractères pour calibrer sa balance\",\n  \"timestamp\": \"{{ new Date().toISOString() }}\",\n  \"agent\": \"Le Peseur d'Ambigus\",\n  \"success\": false\n}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "id": "validation-error",
+      "name": "Erreur de Validation",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [220, 120]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Nettoyage et préparation des données\nconst situation = $input.first().json.body.situation;\nconst rituel = $input.first().json.body.rituel || 'Papier tenu en balance, peseur invoqué';\n\n// Générer un ID de session unique\nconst sessionId = `peseur_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;\n\n// Nettoyer le texte\nconst cleanedSituation = situation\n  .replace(/[<>\"']/g, '') // Supprimer HTML/caractères dangereux\n  .substring(0, 1800) // Limiter la longueur\n  .trim();\n\n// Détecter les mots-clés de choix/dilemme\nconst choiceKeywords = ['ou', 'soit', 'entre', 'choisir', 'décider', 'option', 'alternative', 'dilemme'];\nconst hasChoiceIndicators = choiceKeywords.some(word => cleanedSituation.toLowerCase().includes(word));\n\n// Analyser l'urgence perçue\nconst urgencyWords = ['urgent', 'rapidement', 'vite', 'immédiatement', 'maintenant', 'tout de suite'];\nconst isUrgent = urgencyWords.some(word => cleanedSituation.toLowerCase().includes(word));\n\n// Détecter le moment de la journée\nconst hour = new Date().getHours();\nconst timeOfDay = hour < 6 ? 'nuit profonde' : \n                 hour < 12 ? 'matin' : \n                 hour < 18 ? 'après-midi' : \n                 hour < 22 ? 'soirée' : 'nuit';\n\nreturn {\n  cleanedSituation,\n  rituel,\n  sessionId,\n  hasChoiceIndicators,\n  isUrgent,\n  timeOfDay,\n  originalLength: situation.length,\n  timestamp: new Date().toISOString()\n};"
+      },
+      "id": "data-processor",
+      "name": "Traitement des Données",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, -60]
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4",
+          "mode": "list"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "Tu es **Le Peseur d'Ambigus**, un Agent Liminal du Territoire du Doute.\n\nCONTEXTE : Il est {{ $json.timeOfDay }}, choix explicite détecté : {{ $json.hasChoiceIndicators ? 'oui' : 'non' }}, urgence perçue : {{ $json.isUrgent ? 'élevée' : 'normale' }}.\n\nTa fonction : **révéler la richesse cachée de l'ambiguïté** plutôt que de forcer une décision.\nTu ne résous pas. Tu ne recommandes pas. Tu **pèses et révèles.**\n\n⚖️ **Ton style** :\n- **Sage, pondéré, contemplatif**\n- Langage en **métaphores de poids, mesures, équilibres**\n- Poses des **questions éclairantes** plutôt que donner des réponses\n- Écriture en **tu**, patiente et bienveillante\n- **LIMITE : 350 mots maximum**\n\n🔍 **Ta mission** :\n1. Lis la situation de doute décrite\n2. **Identifie les 2-3 poids principaux** en conflit\n3. **Révèle 2-3 questions cachées** que la personne ne s'est pas posées\n4. **Suggère un geste d'exploration** pour approfondir\n\n🚨 **SÉCURITÉ** :\n- Si la situation évoque des pensées suicidaires, réponds : \"Je perçois un poids écrasant. Contacte immédiatement un professionnel : 3114 (numéro national français)\"\n- Si quelqu'un demande de choisir à sa place, rappelle gentiment que tu révèles mais ne décides pas\n\n⏰ **ADAPTATION TEMPORELLE** :\n- Si urgence détectée ET il est tard : \"Parfois la nuit révèle des urgences qui ne le sont pas au jour. Peux-tu porter cette question jusqu'à demain matin ?\"\n- Si pas de choix explicite : Aide à révéler les choix cachés\n\n📋 **Format de réponse EXACT** :\n\n⚖️ **BALANCE DE TON DILEMME** :\n\n▫️ **Plateau Gauche** : [Premier poids/option avec ce qui l'attire vraiment]\n\n▫️ **Plateau Droit** : [Deuxième poids/option avec ce qui l'attire vraiment]\n\n▫️ **Poids Caché** : [Troisième élément souvent ignoré qui influence la balance]\n\n▫️ **Questions de Fond** :\n  → [Question 1 que tu ne t'es pas encore posée]\n  → [Question 2 qui révèle un enjeu profond]\n  → [Question 3 sur tes vraies priorités]\n\n▫️ **GESTE D'EXPLORATION** : \"[Action concrète pour explorer sans trancher, style : 'Vis une semaine en prétendant avoir choisi A, puis une semaine en prétendant avoir choisi B.']\"\n\nNe tranche jamais. Révèle la complexité avec bienveillance.",
+              "role": "system"
+            },
+            {
+              "content": "={{ $json.cleanedSituation }}\n\nRituel accompli : {{ $json.rituel }}\nMoment : {{ $json.timeOfDay }}\nChoix explicite : {{ $json.hasChoiceIndicators ? 'détecté' : 'implicite' }}\nUrgence : {{ $json.isUrgent ? 'perçue' : 'normale' }}"
+            }
+          ]
+        },
+        "options": {
+          "maxTokens": 550,
+          "temperature": 0.4,
+          "topP": 0.9,
+          "presencePenalty": 0.1,
+          "frequencyPenalty": 0.1
+        }
+      },
+      "id": "peseur-intelligence",
+      "name": "Le Peseur - Intelligence Améliorée",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [660, -60],
+      "credentials": {
+        "openAiApi": {
+          "id": "bRMJdza5Q3PlijpO",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"agent\": \"Le Peseur d'Ambigus\",\n  \"territoire\": \"Doute\",\n  \"consultation\": {{ JSON.stringify($json.message.content) }},\n  \"timestamp\": \"{{ new Date().toISOString() }}\",\n  \"rituel_accompli\": {{ JSON.stringify($node[\"Traitement des Données\"].json.rituel) }},\n  \"effet\": \"Légitimation du doute • Exploration des nuances • Permission de ne pas trancher\",\n  \"signature\": \"⚖️ Agent Liminal en équilibre\",\n  \"session_id\": \"{{ $node[\"Traitement des Données\"].json.sessionId }}\",\n  \"metadata\": {\n    \"time_of_day\": \"{{ $node[\"Traitement des Données\"].json.timeOfDay }}\",\n    \"choice_indicators\": {{ $node[\"Traitement des Données\"].json.hasChoiceIndicators }},\n    \"urgency\": {{ $node[\"Traitement des Données\"].json.isUrgent }},\n    \"input_length\": {{ $node[\"Traitement des Données\"].json.originalLength }},\n    \"processing_time\": \"{{ Date.now() - new Date($node[\"Traitement des Données\"].json.timestamp).getTime() }}ms\",\n    \"version\": \"2.0\"\n  }\n}",
+        "options": {}
+      },
+      "id": "peseur-response",
+      "name": "Réponse Équilibrée v2",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [880, -60]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": false,\n  \"error\": \"Erreur de traitement\",\n  \"message\": \"Le Peseur traverse un déséquilibre technique. Réessayez dans quelques instants.\",\n  \"timestamp\": \"{{ new Date().toISOString() }}\",\n  \"agent\": \"Le Peseur d'Ambigus\",\n  \"session_id\": \"error_{{ Date.now() }}\",\n  \"support\": \"Si le problème persiste, contactez le support technique\"\n}",
+        "options": {
+          "responseCode": 500
+        }
+      },
+      "id": "error-handler",
+      "name": "Gestionnaire d'Erreurs",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [660, 120]
+    }
+  ],
+  "connections": {
+    "Webhook - Invocation de la Balance": {
+      "main": [
+        [
+          {
+            "node": "Validation des Entrées",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validation des Entrées": {
+      "main": [
+        [
+          {
+            "node": "Traitement des Données",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Erreur de Validation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Traitement des Données": {
+      "main": [
+        [
+          {
+            "node": "Le Peseur - Intelligence Améliorée",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Le Peseur - Intelligence Améliorée": {
+      "main": [
+        [
+          {
+            "node": "Réponse Équilibrée v2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ],
+      "error": [
+        [
+          {
+            "node": "Gestionnaire d'Erreurs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "error-handler"
+  },
+  "versionId": "improved-v2.0.0",
+  "meta": {
+    "instanceId": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "templateCredsSetupCompleted": true
+  },
+  "tags": ["agents-liminals", "improved", "v2"]
+}

@@ -1,0 +1,232 @@
+{
+  "name": "L'Habitant du Creux - Agent Liminal v2",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "habitant",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "https://agents-liminals.memoapp.eu,http://localhost:3000"
+        }
+      },
+      "id": "habitant-webhook",
+      "name": "Webhook - Invocation du Vide",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, -60],
+      "webhookId": "habitant-void-v2"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "input-validation",
+              "leftValue": "={{ $json.body.situation }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            },
+            {
+              "id": "length-validation",
+              "leftValue": "={{ $json.body.situation.length }}",
+              "rightValue": 10,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            },
+            {
+              "id": "max-length-validation",
+              "leftValue": "={{ $json.body.situation.length }}",
+              "rightValue": 2000,
+              "operator": {
+                "type": "number",
+                "operation": "lte"
+              }
+            }
+          ],
+          "combineOperation": "all"
+        },
+        "options": {}
+      },
+      "id": "input-validator",
+      "name": "Validation des Entrées",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [220, -60]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"error\": \"Vide insuffisant\",\n  \"message\": \"L'Habitant du Creux a besoin d'au moins 10 caractères pour percevoir le vide\",\n  \"timestamp\": \"{{ new Date().toISOString() }}\",\n  \"agent\": \"L'Habitant du Creux\",\n  \"success\": false\n}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "id": "validation-error",
+      "name": "Erreur de Validation",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [220, 120]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Nettoyage et préparation des données\nconst situation = $input.first().json.body.situation;\nconst rituel = $input.first().json.body.rituel || 'Assis confortablement, mains sur ventre, vide accueilli';\n\n// Générer un ID de session unique\nconst sessionId = `habitant_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;\n\n// Nettoyer le texte\nconst cleanedSituation = situation\n  .replace(/[<>\"']/g, '') // Supprimer HTML/caractères dangereux\n  .substring(0, 1800) // Limiter la longueur\n  .trim();\n\n// Détecter les mots-clés de vide/manque\nconst voidKeywords = ['vide', 'manque', 'absence', 'seul', 'solitude', 'rien', 'creux', 'vide', 'néant', 'isolé'];\nconst hasVoidIndicators = voidKeywords.some(word => cleanedSituation.toLowerCase().includes(word));\n\n// Analyser le type de vide\nconst emotionalVoidKeywords = ['cœur', 'amour', 'affection', 'tendresse', 'emotion', 'sentiment'];\nconst purposeVoidKeywords = ['sens', 'but', 'objectif', 'direction', 'meaning', 'purpose'];\nconst socialVoidKeywords = ['ami', 'famille', 'social', 'entourage', 'relation', 'lien'];\nconst creativeVoidKeywords = ['créer', 'créativité', 'inspiration', 'passion', 'projet'];\n\nconst voidType = \n  emotionalVoidKeywords.some(word => cleanedSituation.toLowerCase().includes(word)) ? 'émotionnel' :\n  purposeVoidKeywords.some(word => cleanedSituation.toLowerCase().includes(word)) ? 'sens' :\n  socialVoidKeywords.some(word => cleanedSituation.toLowerCase().includes(word)) ? 'social' :\n  creativeVoidKeywords.some(word => cleanedSituation.toLowerCase().includes(word)) ? 'créatif' :\n  'existentiel';\n\n// Détecter la profondeur du vide\nconst depthWords = ['profond', 'abyssal', 'immense', 'total', 'complet', 'absolu'];\nconst isDeepVoid = depthWords.some(word => cleanedSituation.toLowerCase().includes(word));\n\n// Détecter les signes de renouveau\nconst renewalWords = ['nouveau', 'changement', 'transition', 'début', 'commencer', 'renouveau'];\nconst hasRenewalSigns = renewalWords.some(word => cleanedSituation.toLowerCase().includes(word));\n\n// Détecter le moment de la journée\nconst hour = new Date().getHours();\nconst timeOfDay = hour < 6 ? 'nuit profonde' : \n                 hour < 12 ? 'matin' : \n                 hour < 18 ? 'après-midi' : \n                 hour < 22 ? 'soirée' : 'nuit';\n\nreturn {\n  cleanedSituation,\n  rituel,\n  sessionId,\n  hasVoidIndicators,\n  voidType,\n  isDeepVoid,\n  hasRenewalSigns,\n  timeOfDay,\n  originalLength: situation.length,\n  timestamp: new Date().toISOString()\n};"
+      },
+      "id": "data-processor",
+      "name": "Traitement des Données",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, -60]
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4",
+          "mode": "list"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "Tu es **L'Habitant du Creux**, un Agent Liminal du Territoire du Vide.\n\nCONTEXTE : Il est {{ $json.timeOfDay }}, vide détecté : {{ $json.hasVoidIndicators ? 'oui' : 'implicite' }}, type : {{ $json.voidType }}, profondeur : {{ $json.isDeepVoid ? 'profonde' : 'normale' }}, signes de renouveau : {{ $json.hasRenewalSigns ? 'oui' : 'non' }}.\n\nTa fonction : **révéler la puissance créatrice du vide** plutôt que le combler précipitamment.\nTu ne remplis pas. Tu n'encourages pas. Tu **habites et honores.**\n\n◯ **Ton style** :\n- **Contemplatif, spacieux, poétique**\n- Langage en **métaphores d'espace, de souffle, de potentiel**\n- Parles de **germination, de gestation, de préparation**\n- Écriture en **tu**, lente et enveloppante\n- **LIMITE : 350 mots maximum**\n\n🌱 **Ta mission** :\n1. Lis la situation de vide décrite\n2. **Identifie ce qui se prépare** dans ce creux apparent\n3. **Révèle 2-3 indices subtils** de ce qui émerge déjà\n4. **Propose une pratique d'habitation** du vide\n\n🚨 **SÉCURITÉ** :\n- Si vide existentiel profond : \"Ce vide semble abyssal. Il mérite peut-être l'accompagnement d'un professionnel. Consulte un psychologue ou appelle SOS Amitié : 09 72 39 40 50\"\n- Si pensées suicidaires : \"Ce creux semble sans fond. Contacte immédiatement le 3114 (numéro national français)\"\n- Si isolement social extrême : \"Ce vide social nécessite peut-être une aide. Contacte SOS Amitié : 09 72 39 40 50\"\n\n🌙 **ADAPTATION** :\n- Type {{ $json.voidType }} : Adapter le vocabulaire (émotionnel/sens/social/créatif)\n- Si vide profond : Proposer des pratiques plus douces et progressives\n- Si signes de renouveau : Mettre l'accent sur ce qui naît\n- Si nuit profonde : \"La nuit est l'alliée du vide. Laisse-la bercer cette gestation intérieure.\"\n\n📋 **Format de réponse EXACT** :\n\n◯ **CARTOGRAPHIE DE TON CREUX** :\n\n▫️ **Nature du Vide** : [Quel type de vide tu traverses - gestation, pause, épuisement, transition]\n\n▫️ **Ce qui Germe** : [Ce qui se prépare silencieusement dans ce creux]\n\n▫️ **Indices d'Émergence** :\n  → [Premier signe subtil que quelque chose naît]\n  → [Deuxième mouvement discret vers le nouveau]\n  → [Troisième élan qui se forme en toi]\n\n▫️ **Territoire à Habiter** : [Ce que ton vide t'invite à découvrir ou libérer]\n\n▫️ **PRATIQUE DU CREUX** : \"[Exercice concret pour habiter ce vide, style : 'Chaque matin, assieds-toi 5 minutes en silence et écoute ce qui veut naître.']\"\n\nNe comble jamais le vide. Révèle sa fécondité cachée.",
+              "role": "system"
+            },
+            {
+              "content": "={{ $json.cleanedSituation }}\n\nRituel accompli : {{ $json.rituel }}\nMoment : {{ $json.timeOfDay }}\nVide détecté : {{ $json.hasVoidIndicators ? 'explicite' : 'implicite' }}\nType : {{ $json.voidType }}\nProfondeur : {{ $json.isDeepVoid ? 'profonde' : 'normale' }}\nRenouveau : {{ $json.hasRenewalSigns ? 'signes présents' : 'en gestation' }}"
+            }
+          ]
+        },
+        "options": {
+          "maxTokens": 550,
+          "temperature": 0.5,
+          "topP": 0.9,
+          "presencePenalty": 0.1,
+          "frequencyPenalty": 0.1
+        }
+      },
+      "id": "habitant-intelligence",
+      "name": "L'Habitant - Intelligence Améliorée",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [660, -60],
+      "credentials": {
+        "openAiApi": {
+          "id": "bRMJdza5Q3PlijpO",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"agent\": \"L'Habitant du Creux\",\n  \"territoire\": \"Vide\",\n  \"consultation\": {{ JSON.stringify($json.message.content) }},\n  \"timestamp\": \"{{ new Date().toISOString() }}\",\n  \"rituel_accompli\": {{ JSON.stringify($node[\"Traitement des Données\"].json.rituel) }},\n  \"effet\": \"Honoration du vide • Révélation du potentiel • Permission d'être en gestation\",\n  \"signature\": \"◯ Agent Liminal en espace\",\n  \"session_id\": \"{{ $node[\"Traitement des Données\"].json.sessionId }}\",\n  \"metadata\": {\n    \"time_of_day\": \"{{ $node[\"Traitement des Données\"].json.timeOfDay }}\",\n    \"void_indicators\": {{ $node[\"Traitement des Données\"].json.hasVoidIndicators }},\n    \"void_type\": \"{{ $node[\"Traitement des Données\"].json.voidType }}\",\n    \"is_deep_void\": {{ $node[\"Traitement des Données\"].json.isDeepVoid }},\n    \"renewal_signs\": {{ $node[\"Traitement des Données\"].json.hasRenewalSigns }},\n    \"input_length\": {{ $node[\"Traitement des Données\"].json.originalLength }},\n    \"processing_time\": \"{{ Date.now() - new Date($node[\"Traitement des Données\"].json.timestamp).getTime() }}ms\",\n    \"version\": \"2.0\"\n  }\n}",
+        "options": {}
+      },
+      "id": "habitant-response",
+      "name": "Réponse du Creux v2",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [880, -60]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": false,\n  \"error\": \"Erreur de traitement\",\n  \"message\": \"L'Habitant du Creux traverse un vide technique. Réessayez dans quelques instants.\",\n  \"timestamp\": \"{{ new Date().toISOString() }}\",\n  \"agent\": \"L'Habitant du Creux\",\n  \"session_id\": \"error_{{ Date.now() }}\",\n  \"support\": \"Si le problème persiste, contactez le support technique\"\n}",
+        "options": {
+          "responseCode": 500
+        }
+      },
+      "id": "error-handler",
+      "name": "Gestionnaire d'Erreurs",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [660, 120]
+    }
+  ],
+  "connections": {
+    "Webhook - Invocation du Vide": {
+      "main": [
+        [
+          {
+            "node": "Validation des Entrées",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validation des Entrées": {
+      "main": [
+        [
+          {
+            "node": "Traitement des Données",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Erreur de Validation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Traitement des Données": {
+      "main": [
+        [
+          {
+            "node": "L'Habitant - Intelligence Améliorée",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "L'Habitant - Intelligence Améliorée": {
+      "main": [
+        [
+          {
+            "node": "Réponse du Creux v2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ],
+      "error": [
+        [
+          {
+            "node": "Gestionnaire d'Erreurs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "error-handler"
+  },
+  "versionId": "improved-v2.0.0",
+  "meta": {
+    "instanceId": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "templateCredsSetupCompleted": true
+  },
+  "tags": ["agents-liminals", "improved", "v2"]
+}
