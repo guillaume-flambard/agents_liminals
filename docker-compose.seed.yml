@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  # Temporary seeding service
+  agents-seed:
+    build: .
+    container_name: agents-liminals-seed
+    env_file: .env
+    command: node server/scripts/seed.js
+    networks:
+      - shared
+    volumes:
+      - ./logs:/app/logs
+
+networks:
+  shared:
+    external: true

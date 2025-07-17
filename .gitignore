@@ -1,0 +1,61 @@
+# Next.js
+/.next/
+/out/
+
+# Production
+/build
+
+# Dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# Testing
+/coverage
+
+# Environment variables
+.env
+.env*.local
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# Vercel
+.vercel
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# System files
+.DS_Store
+*.pem
+
+# Logs
+logs
+*.log
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Archive
+archive/
+
+# Temporary files
+*.tmp
+*.temp
+.env.production
+.env
+.env.local
+init.sql

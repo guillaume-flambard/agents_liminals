@@ -1,0 +1,77 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500;600;700&display=swap');
+
+@layer base {
+  :root {
+    --background: 220 25% 8%;
+    --foreground: 210 40% 95%;
+    --card: 220 25% 12%;
+    --card-foreground: 210 40% 95%;
+    --popover: 220 25% 12%;
+    --popover-foreground: 210 40% 95%;
+    --primary: 200 80% 65%;
+    --primary-foreground: 220 25% 8%;
+    --secondary: 220 15% 20%;
+    --secondary-foreground: 210 40% 95%;
+    --muted: 220 15% 15%;
+    --muted-foreground: 220 15% 60%;
+    --accent: 220 15% 20%;
+    --accent-foreground: 210 40% 95%;
+    --destructive: 0 65% 55%;
+    --destructive-foreground: 210 40% 95%;
+    --border: 220 15% 20%;
+    --input: 220 15% 15%;
+    --ring: 200 80% 65%;
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-serif;
+    background: linear-gradient(135deg, #0c1426 0%, #1a252f 50%, #2c3e50 100%);
+    min-height: 100vh;
+  }
+}
+
+@layer components {
+  .agent-gradient {
+    @apply bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900;
+  }
+  
+  .agent-border {
+    border: 1px solid rgba(52, 152, 219, 0.6);
+  }
+  
+  .agent-surface {
+    @apply bg-slate-800/50 backdrop-blur-md;
+  }
+  
+  .frequency-indicator {
+    @apply absolute right-0 top-1/2 -translate-y-1/2 w-1 h-16 bg-gradient-to-t from-blue-400 to-purple-400 rounded-full opacity-40;
+    animation: frequencyWave 3s ease-in-out infinite;
+  }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-slate-800/50;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-600 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-slate-500;
+}
