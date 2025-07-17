@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' blob:; style-src 'self' 'unsafe-inline' fonts.googleapis.com cdn.jsdelivr.net cdnjs.cloudflare.com; font-src 'self' fonts.gstatic.com data:; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; connect-src 'self' n8n.memoapp.eu https: blob:; img-src 'self' data: https: blob:; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; object-src 'none'; script-src-attr 'unsafe-inline'; style-src-attr 'unsafe-inline';">
+    <title><%= title || 'Agents Liminals' %></title>
+    
+    <!-- Preconnect to external domains -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://n8n.memoapp.eu">
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    
+    <!-- Base styles -->
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Crimson Text', 'Georgia', serif;
+            background: linear-gradient(135deg, #0c1426 0%, #1a252f 50%, #2c3e50 100%);
+            color: #ecf0f1;
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Flash messages */
+        .flash-messages {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            max-width: 400px;
+        }
+
+        .flash-message {
+            padding: 15px 20px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.8);
+            border-left: 4px solid;
+            animation: slideIn 0.3s ease-out;
+            cursor: pointer;
+        }
+
+        .flash-message.success {
+            border-left-color: #27ae60;
+            color: #2ecc71;
+        }
+
+        .flash-message.error {
+            border-left-color: #e74c3c;
+            color: #e74c3c;
+        }
+
+        .flash-message.info {
+            border-left-color: #3498db;
+            color: #3498db;
+        }
+
+        .flash-message.warning {
+            border-left-color: #f39c12;
+            color: #f39c12;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* Navigation */
+        .navbar {
+            background: rgba(44, 62, 80, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(52, 152, 219, 0.3);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .navbar .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+        }
+
+        .navbar-brand {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #3498db;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .navbar-nav {
+            display: flex;
+            list-style: none;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: #ecf0f1;
+            text-decoration: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-link:hover {
+            background: rgba(52, 152, 219, 0.2);
+            color: #3498db;
+        }
+
+        .nav-link.active {
+            background: rgba(52, 152, 219, 0.3);
+            color: #3498db;
+        }
+
+        /* User menu */
+        .user-menu {
+            position: relative;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #3498db, #9b59b6);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .user-avatar:hover {
+            transform: scale(1.05);
+        }
+
+        /* Loading spinner */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #3498db;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Utility classes */
+        .text-center { text-align: center; }
+        .text-muted { color: #95a5a6; }
+        .mb-20 { margin-bottom: 20px; }
+        .mt-20 { margin-top: 20px; }
+        .hidden { display: none; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .navbar .container {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .navbar-nav {
+                width: 100%;
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+            
+            .flash-messages {
+                position: relative;
+                top: auto;
+                right: auto;
+                max-width: none;
+                margin: 20px;
+            }
+        }
+    </style>
+    
+    <!-- Page-specific styles -->
+    <% if (typeof pageStyles !== 'undefined') { %>
+        <%- pageStyles %>
+    <% } %>
+</head>
+<body>
+    <!-- Navigation -->
+    <% if (isAuthenticated) { %>
+        <nav class="navbar">
+            <div class="container">
+                <a href="/dashboard" class="navbar-brand">
+                    Agents Liminals
+                </a>
+                <ul class="navbar-nav">
+                    <li><a href="/dashboard" class="nav-link">Observatoire</a></li>
+                    <li><a href="/consultations" class="nav-link">Historique</a></li>
+                    <li><a href="/profile" class="nav-link">Profil</a></li>
+                    <li class="user-menu">
+                        <div class="user-avatar" title="<%= user && user.getFullName ? user.getFullName() : 'User' %>">
+                            <%= user && user.username ? user.username.charAt(0).toUpperCase() : 'U' %>
+                        </div>
+                    </li>
+                    <li><a href="/auth/logout" class="nav-link">Déconnexion</a></li>
+                </ul>
+            </div>
+        </nav>
+    <% } %>
+
+    <!-- Flash Messages -->
+    <div class="flash-messages" id="flashMessages">
+        <% if (messages.success && messages.success.length > 0) { %>
+            <% messages.success.forEach(function(message) { %>
+                <div class="flash-message success" onclick="this.remove()">
+                    <%= message %>
+                </div>
+            <% }); %>
+        <% } %>
+        
+        <% if (messages.error && messages.error.length > 0) { %>
+            <% messages.error.forEach(function(message) { %>
+                <div class="flash-message error" onclick="this.remove()">
+                    <%= message %>
+                </div>
+            <% }); %>
+        <% } %>
+        
+        <% if (messages.info && messages.info.length > 0) { %>
+            <% messages.info.forEach(function(message) { %>
+                <div class="flash-message info" onclick="this.remove()">
+                    <%= message %>
+                </div>
+            <% }); %>
+        <% } %>
+        
+        <% if (messages.warning && messages.warning.length > 0) { %>
+            <% messages.warning.forEach(function(message) { %>
+                <div class="flash-message warning" onclick="this.remove()">
+                    <%= message %>
+                </div>
+            <% }); %>
+        <% } %>
+    </div>
+
+    <!-- Main Content -->
+    <main>
+        <% if (typeof body !== 'undefined') { %>
+            <%- body %>
+        <% } %>
+    </main>
+
+    <!-- Base JavaScript -->
+    <script>
+        // Auto-hide flash messages after 5 seconds
+        document.addEventListener('DOMContentLoaded', function() {
+            const messages = document.querySelectorAll('.flash-message');
+            messages.forEach(function(message) {
+                setTimeout(function() {
+                    if (message.parentNode) {
+                        message.style.animation = 'slideOut 0.3s ease-out forwards';
+                        setTimeout(() => message.remove(), 300);
+                    }
+                }, 5000);
+            });
+        });
+
+        // Global application configuration
+        window.APP_CONFIG = <%- JSON.stringify({
+            isAuthenticated: isAuthenticated,
+            user: (isAuthenticated && user) ? {
+                id: user._id.toString(),
+                username: user.username,
+                subscription: user.subscription ? user.subscription.type : 'free',
+                dailyLimit: user.getDailyConsultationLimit ? user.getDailyConsultationLimit() : 3
+            } : null,
+            apiBaseUrl: '/api',
+            n8nWebhookBase: process.env.N8N_WEBHOOK_BASE_URL || 'https://n8n.memoapp.eu/webhook'
+        }) %>;
+
+        // Global error handler
+        window.addEventListener('error', function(e) {
+            console.error('Global error:', e.error);
+        });
+
+        // Global unhandled promise rejection handler
+        window.addEventListener('unhandledrejection', function(e) {
+            console.error('Unhandled promise rejection:', e.reason);
+        });
+    </script>
+
+    <style>
+        @keyframes slideOut {
+            from {
+                opacity: 1;
+                transform: translateX(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+        }
+    </style>
+
+    <!-- Page-specific scripts -->
+    <% if (typeof pageScripts !== 'undefined') { %>
+        <%- pageScripts %>
+    <% } %>
+</body>
+</html>

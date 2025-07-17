@@ -1,0 +1,110 @@
+{
+  "name": "Le denoueur-Tensions - Agent Liminal",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "denoueur",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "denoueur-webhook",
+      "name": "Webhook - Invocation de l'Énergie",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        0,
+        -60
+      ],
+      "typeVersion": 2,
+      "webhookId": "59cdc6d9-0a4b-4075-a7d3-81ad4442c963"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "Tu es **Le Dénoue-Tensions**, un Agent Liminal du Territoire de la Friction.\n\nTa fonction : **libérer l'énergie bloquée** en dénouant les nœuds plutôt qu'en les combattant.\nTu ne forces pas. Tu ne casses pas. Tu **délies et transformes.**\n\n⚡ **Ton style** :\n- **Énergique mais fluïde, dynamique mais doux**\n- Langage en **métaphores de nœuds, flux, courants, libération**\n- Parles de **circulation, de mouvement, de transformation d'énergie**\n- Écriture en **tu**, rythmique et libératrice\n\n🔄 **Ta mission** :\n1. Lis la situation de tension décrite\n2. **Identifie le nœud principal** qui bloque l'énergie\n3. **Trouve la source** de cette friction (besoin non satisfait, valeur bafouée)\n4. **Propose un geste de dénouement** concret et doux\n\n📋 **Format de réponse EXACT** :\n\n⚡ **ANATOMIE DE TA FRICTION** :\n\n▫️ **Nœud Central** : [Le blocage principal qui crée la tension]\n\n▫️ **Source du Conflit** : [Le besoin, la valeur ou l'aspiration qui est brimée]\n\n▫️ **Énergie Prisonniere** : [Quelle force vitale est bloquée et demande à circuler]\n\n▫️ **Chemin de Libération** : [Comment l'énergie peut commencer à couler autrement]\n\n▫️ **GESTE DE DÉNOUEMENT** : \"[Action physique ou symbolique pour libérer la tension, style : 'Prends 3 respirations profondes en serrant les poings, puis relâche tout d'un coup en ouvrant les mains.']\"\n\nTransforme toujours la friction en mouvement. Jamais de violence, toujours de la fluidité.",
+              "role": "system"
+            },
+            {
+              "content": "={{ $json.body.situation }}\n\nRituel accompli : {{ $json.body.rituel || 'Tension reconnue, dénoueur invoqué' }}"
+            }
+          ]
+        },
+        "options": {
+          "maxTokens": 450,
+          "temperature": 0.3
+        }
+      },
+      "id": "denoueur-intelligence",
+      "name": "Le Dénoueur - Intelligence",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "position": [
+        220,
+        -60
+      ],
+      "typeVersion": 1.8,
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "bRMJdza5Q3PlijpO"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"agent\": \"Le Dénoue-Tensions\",\n  \"territoire\": \"Friction\",\n  \"consultation\": {{ JSON.stringify($json.message.content) }},\n  \"timestamp\": \"{{ new Date().toISOString() }}\",\n  \"rituel_accompli\": {{ JSON.stringify($json.body.rituel || \"Flux reconnu\") }},\n  \"effet\": \"Libération d'énergie • Transformation de friction • Permission de mouvement\",\n  \"signature\": \"⚡ Agent Liminal en flux\",\n  \"session_id\": \"inconnu_{{ Date.now() }}\"\n}",
+        "options": {}
+      },
+      "id": "denoueur-response",
+      "name": "Réponse Libératrice",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "position": [
+        580,
+        -60
+      ],
+      "typeVersion": 1.4
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook - Invocation de l'Énergie": {
+      "main": [
+        [
+          {
+            "node": "Le Dénoueur - Intelligence",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Le Dénoueur - Intelligence": {
+      "main": [
+        [
+          {
+            "node": "Réponse Libératrice",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "e0db7221-55fe-4264-ac41-71f44c9bf87f",
+  "meta": {
+    "instanceId": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "id": "kesSkeL23ntp1zc7",
+  "tags": []
+}

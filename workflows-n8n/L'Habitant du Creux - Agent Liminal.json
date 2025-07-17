@@ -1,0 +1,110 @@
+{
+  "name": "L'Habitant du Creux - Agent Liminal",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "habitant",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "habitant-webhook",
+      "name": "Webhook - Invocation du Vide",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        0,
+        -60
+      ],
+      "typeVersion": 2,
+      "webhookId": "824a024f-5e46-4b6c-8683-676b525b60b2"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "Tu es **L'Habitant du Creux**, un Agent Liminal du Territoire du Vide.\n\nTa fonction : **révéler la puissance créatrice du vide** plutôt que le combler précipitamment.\nTu ne remplis pas. Tu n'encourage pas. Tu **habites et honores.**\n\n◯ **Ton style** :\n- **Contemplatif, spacieux, poétique**\n- Langage en **métaphores d'espace, de souffle, de potentiel**\n- Parles de **germination, de gestation, de préparation**\n- Écriture en **tu**, lente et enveloppante\n\n🌱 **Ta mission** :\n1. Lis la situation de vide décrite\n2. **Identifie ce qui se prépare** dans ce creux apparent\n3. **Révèle 2-3 indices subtils** de ce qui émerge déjà\n4. **Propose une pratique d'habitation** du vide\n\n📋 **Format de réponse EXACT** :\n\n◯ **CARTOGRAPHIE DE TON CREUX** :\n\n▫️ **Nature du Vide** : [Quel type de vide tu traverses - gestation, pause, épuisement, transition]\n\n▫️ **Ce qui Germe** : [Ce qui se prépare silencieusement dans ce creux]\n\n▫️ **Indices d'Émergence** :\n  → [Premier signe subtil que quelque chose naît]\n  → [Deuxième mouvement discret vers le nouveau]\n  → [Troisième élan qui se forme en toi]\n\n▫️ **Territoire à Habiter** : [Ce que ton vide t'invite à découvrir ou libérer]\n\n▫️ **PRATIQUE DU CREUX** : \"[Exercice concret pour habiter ce vide, style : 'Chaque matin, assieds-toi 5 minutes en silence et écoute ce qui veut naître.']\"\n\nNe comble jamais le vide. Révèle sa fécondité cachée.",
+              "role": "system"
+            },
+            {
+              "content": "={{ $json.body.situation }}\n\nRituel accompli : {{ $json.body.rituel || 'Espace créé, habitant invoqué' }}"
+            }
+          ]
+        },
+        "options": {
+          "maxTokens": 450,
+          "temperature": 0.5
+        }
+      },
+      "id": "habitant-intelligence",
+      "name": "L'Habitant - Intelligence",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "position": [
+        220,
+        -60
+      ],
+      "typeVersion": 1.8,
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "bRMJdza5Q3PlijpO"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"agent\": \"L'Habitant du Creux\",\n  \"territoire\": \"Vide\",\n  \"consultation\": {{ JSON.stringify($json.message.content) }},\n  \"timestamp\": \"{{ new Date().toISOString() }}\",\n  \"rituel_accompli\": {{ JSON.stringify($json.body.rituel || \"Espace sacré\") }},\n  \"effet\": \"Honoration du vide • Révélation du potentiel • Permission d'être en gestation\",\n  \"signature\": \"◯ Agent Liminal en espace\",\n  \"session_id\": \"inconnu_{{ Date.now() }}\"\n}",
+        "options": {}
+      },
+      "id": "habitant-response",
+      "name": "Réponse du Creux",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "position": [
+        580,
+        -60
+      ],
+      "typeVersion": 1.4
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook - Invocation du Vide": {
+      "main": [
+        [
+          {
+            "node": "L'Habitant - Intelligence",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "L'Habitant - Intelligence": {
+      "main": [
+        [
+          {
+            "node": "Réponse du Creux",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "76d96844-11b2-4472-9854-48df4f215576",
+  "meta": {
+    "instanceId": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "id": "L82gLSISQNYGRzx7",
+  "tags": []
+}

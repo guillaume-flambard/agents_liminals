@@ -1,0 +1,289 @@
+<%- include('../layouts/main') %>
+
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <div class="page-header">
+        <h1 class="page-title">Agents Liminals</h1>
+        <p class="page-subtitle">Découvrez les agents disponibles pour vos consultations</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-12">
+      <div class="agents-grid">
+        <% agents.forEach(agent => { %>
+          <div class="agent-card">
+            <div class="agent-header">
+              <div class="agent-icon">
+                <% if (agent.name === 'accordeur') { %>🎼
+                <% } else if (agent.name === 'peseur') { %>⚖️
+                <% } else if (agent.name === 'denoueur') { %>⚡
+                <% } else if (agent.name === 'evideur') { %>🕳️
+                <% } else if (agent.name === 'habitant') { %>◯
+                <% } else { %>🌟<% } %>
+              </div>
+              <div class="agent-info">
+                <h3 class="agent-name"><%= agent.displayName %></h3>
+                <p class="agent-territory"><%= agent.territory %></p>
+              </div>
+              <div class="agent-status">
+                <span class="status-badge <%= agent.isAvailable() ? 'status-available' : 'status-unavailable' %>">
+                  <%= agent.isAvailable() ? 'Disponible' : 'Indisponible' %>
+                </span>
+              </div>
+            </div>
+
+            <div class="agent-description">
+              <p><%= agent.description %></p>
+            </div>
+
+            <div class="agent-stats">
+              <div class="stat-item">
+                <span class="stat-label">Consultations</span>
+                <span class="stat-value"><%= agent.consultationCount || 0 %></span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Note moyenne</span>
+                <span class="stat-value">
+                  <% if (agent.averageRating) { %>
+                    <%= agent.averageRating.toFixed(1) %>/5
+                  <% } else { %>
+                    N/A
+                  <% } %>
+                </span>
+              </div>
+            </div>
+
+            <div class="agent-actions">
+              <% if (agent.isAvailable()) { %>
+                <a href="/agents/<%= agent.name %>" class="btn btn-primary">
+                  <i class="fas fa-comments"></i> Consulter
+                </a>
+              <% } else { %>
+                <button class="btn btn-secondary" disabled>
+                  <i class="fas fa-clock"></i> Indisponible
+                </button>
+              <% } %>
+              <a href="/agents/<%= agent.name %>" class="btn btn-outline-primary">
+                <i class="fas fa-info"></i> En savoir plus
+              </a>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .page-header {
+    margin-bottom: 3rem;
+    text-align: center;
+  }
+
+  .page-title {
+    color: #2c3e50;
+    font-size: 3rem;
+    margin-bottom: 1rem;
+  }
+
+  .page-subtitle {
+    color: #6c757d;
+    font-size: 1.2rem;
+    margin-bottom: 0;
+  }
+
+  .agents-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    gap: 2rem;
+  }
+
+  .agent-card {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 1px solid #e9ecef;
+  }
+
+  .agent-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+  }
+
+  .agent-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .agent-icon {
+    font-size: 3rem;
+    width: 70px;
+    height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .agent-info {
+    flex: 1;
+  }
+
+  .agent-name {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+  }
+
+  .agent-territory {
+    color: #6c757d;
+    font-size: 0.9rem;
+    margin-bottom: 0;
+    font-style: italic;
+  }
+
+  .agent-status {
+    flex-shrink: 0;
+  }
+
+  .status-badge {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+  }
+
+  .status-available {
+    background: #d4edda;
+    color: #155724;
+  }
+
+  .status-unavailable {
+    background: #f8d7da;
+    color: #721c24;
+  }
+
+  .agent-description {
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+    color: #495057;
+  }
+
+  .agent-stats {
+    display: flex;
+    gap: 2rem;
+    margin-bottom: 2rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+  }
+
+  .stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .stat-label {
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-bottom: 0.25rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .stat-value {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #2c3e50;
+  }
+
+  .agent-actions {
+    display: flex;
+    gap: 1rem;
+  }
+
+  .btn {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-decoration: none;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+  }
+
+  .btn-outline-primary {
+    background: transparent;
+    border: 2px solid #667eea;
+    color: #667eea;
+  }
+
+  .btn-outline-primary:hover {
+    background: #667eea;
+    color: white;
+  }
+
+  .btn-secondary {
+    background: #6c757d;
+    color: white;
+  }
+
+  .btn-secondary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  @media (max-width: 768px) {
+    .agents-grid {
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+    
+    .agent-card {
+      padding: 1.5rem;
+    }
+    
+    .agent-header {
+      flex-direction: column;
+      text-align: center;
+    }
+    
+    .agent-stats {
+      flex-direction: column;
+      gap: 1rem;
+    }
+    
+    .agent-actions {
+      flex-direction: column;
+    }
+  }
+</style>

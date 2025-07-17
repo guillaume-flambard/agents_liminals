@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>L'Évideur - Agent Liminal</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+      color: #ecf0f1;
+      font-family: 'Georgia', serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .observatoire {
+      background: rgba(44, 62, 80, 0.95);
+      border: 1px solid #7f8c8d;
+      border-radius: 12px;
+      padding: 40px;
+      max-width: 700px;
+      width: 100%;
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(15px);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .observatoire::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #d35400, transparent);
+      opacity: 0.7;
+    }
+
+    .agent-header {
+      text-align: center;
+      margin-bottom: 30px;
+      position: relative;
+    }
+
+    .agent-title {
+      font-size: 2.8rem;
+      color: #d35400;
+      margin-bottom: 8px;
+      font-weight: normal;
+      letter-spacing: 3px;
+      text-shadow: 0 2px 10px rgba(211, 84, 0, 0.3);
+    }
+
+    .agent-subtitle {
+      color: #95a5a6;
+      font-style: italic;
+      font-size: 1.1rem;
+      margin-bottom: 10px;
+    }
+
+    .consultation-counter {
+      color: #f39c12;
+      font-size: 0.9rem;
+      opacity: 0.8;
+    }
+
+    .symptome {
+      background: rgba(231, 76, 60, 0.12);
+      border-left: 4px solid #e74c3c;
+      padding: 18px;
+      margin-bottom: 25px;
+      border-radius: 0 6px 6px 0;
+      transition: all 0.3s ease;
+    }
+
+    .symptome:hover {
+      background: rgba(231, 76, 60, 0.18);
+    }
+
+    .rituel-section {
+      margin-bottom: 30px;
+    }
+
+    .rituel-title {
+      color: #f39c12;
+      font-size: 1.3rem;
+      margin-bottom: 15px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .rituel-steps {
+      background: rgba(243, 156, 18, 0.12);
+      padding: 22px;
+      border-radius: 6px;
+      margin-bottom: 25px;
+      line-height: 1.7;
+      border: 1px solid rgba(243, 156, 18, 0.2);
+    }
+
+    .situation-input {
+      width: 100%;
+      height: 140px;
+      background: rgba(52, 73, 94, 0.9);
+      border: 2px solid #7f8c8d;
+      border-radius: 6px;
+      color: #ecf0f1;
+      padding: 18px;
+      font-family: inherit;
+      font-size: 1.05rem;
+      resize: vertical;
+      margin-bottom: 20px;
+      transition: all 0.3s ease;
+      line-height: 1.5;
+    }
+
+    .situation-input:focus {
+      outline: none;
+      border-color: #d35400;
+      box-shadow: 0 0 0 3px rgba(211, 84, 0, 0.2);
+    }
+
+    .situation-input::placeholder {
+      color: #95a5a6;
+      font-style: italic;
+    }
+
+    .invocation-controls {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .invocation-btn {
+      background: linear-gradient(45deg, #d35400, #e67e22);
+      color: white;
+      border: none;
+      padding: 18px 35px;
+      border-radius: 6px;
+      font-size: 1.1rem;
+      cursor: pointer;
+      flex: 1;
+      transition: all 0.3s ease;
+      font-family: inherit;
+      letter-spacing: 1px;
+      font-weight: 500;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .invocation-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.5s;
+    }
+
+    .invocation-btn:hover::before {
+      left: 100%;
+    }
+
+    .invocation-btn:hover {
+      background: linear-gradient(45deg, #e67e22, #f39c12);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(211, 84, 0, 0.4);
+    }
+
+    .invocation-btn:disabled {
+      background: #7f8c8d;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .clear-btn {
+      background: rgba(149, 165, 166, 0.2);
+      border: 1px solid #95a5a6;
+      color: #95a5a6;
+      padding: 18px 25px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-family: inherit;
+    }
+
+    .clear-btn:hover {
+      background: rgba(149, 165, 166, 0.3);
+      color: #ecf0f1;
+    }
+
+    .response-area {
+      margin-top: 30px;
+      padding: 25px;
+      background: rgba(26, 188, 156, 0.12);
+      border-radius: 8px;
+      border-left: 4px solid #1abc9c;
+      line-height: 1.8;
+      font-size: 1.05rem;
+      display: none;
+      transition: all 0.4s ease;
+      border: 1px solid rgba(26, 188, 156, 0.2);
+    }
+
+    .response-area.show {
+      display: block;
+      animation: slideIn 0.4s ease;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .consultation-content {
+      white-space: pre-line;
+      margin-bottom: 20px;
+    }
+
+    .consultation-meta {
+      border-top: 1px solid rgba(26, 188, 156, 0.3);
+      padding-top: 15px;
+      font-size: 0.95rem;
+      color: rgba(236, 240, 241, 0.8);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .save-consultation {
+      background: rgba(26, 188, 156, 0.2);
+      border: 1px solid #1abc9c;
+      color: #1abc9c;
+      padding: 8px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: all 0.3s ease;
+    }
+
+    .save-consultation:hover {
+      background: rgba(26, 188, 156, 0.3);
+      color: #ecf0f1;
+    }
+
+    .loading {
+      text-align: center;
+      color: #f39c12;
+      font-style: italic;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .loading::before {
+      content: '🌀';
+      animation: spin 2s linear infinite;
+    }
+
+    @keyframes spin {
+      from {
+        transform: rotate(0deg);
+      }
+
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .error {
+      background: rgba(231, 76, 60, 0.12);
+      border-left: 4px solid #e74c3c;
+      border-color: #e74c3c;
+      color: #e74c3c;
+    }
+
+    .signature {
+      text-align: center;
+      margin-top: 25px;
+      color: #95a5a6;
+      font-size: 0.9rem;
+      opacity: 0.7;
+      border-top: 1px solid rgba(149, 165, 166, 0.2);
+      padding-top: 20px;
+    }
+
+    .history-toggle {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(149, 165, 166, 0.1);
+      border: 1px solid #95a5a6;
+      color: #95a5a6;
+      padding: 8px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.3s ease;
+    }
+
+    .history-toggle:hover {
+      background: rgba(149, 165, 166, 0.2);
+      color: #ecf0f1;
+    }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .agent-title {
+        font-size: 2.2rem;
+        letter-spacing: 2px;
+      }
+
+      .invocation-controls {
+        flex-direction: column;
+      }
+
+      .consultation-meta {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="observatoire">
+    <button class="history-toggle" onclick="toggleHistory()">📜 Historique</button>
+
+    <div class="agent-header">
+      <h1 class="agent-title">L'Évideur</h1>
+      <p class="agent-subtitle">Agent du Territoire du Trop-Plein</p>
+      <div class="consultation-counter" id="consultationCounter">
+        Consultations aujourd'hui : <span id="todayCount">0</span>/3
+      </div>
+    </div>
+
+    <div class="symptome">
+      <strong>Symptôme d'appel :</strong> "J'ai trop de choses dans la tête, je ne sais plus par où commencer, tout me
+      semble important"
+    </div>
+
+    <div class="rituel-section">
+      <div class="rituel-title">
+        🔮 Rituel d'Invocation
+      </div>
+      <div class="rituel-steps">
+        1. Écris ci-dessous tout ce qui t'encombre<br>
+        2. Ferme les yeux et respire 3 fois profondément<br>
+        3. Dis à voix haute : <em>"Évideur, montre-moi ce qui peut disparaître"</em><br>
+        4. Clique pour invoquer l'agent
+      </div>
+
+      <textarea class="situation-input" id="situationInput"
+        placeholder="Décris ta situation encombrée... Projets multiples, tâches qui s'accumulent, préoccupations qui tournent en boucle... Tout ce qui prend trop de place dans ton esprit."
+        maxlength="2000"></textarea>
+
+      <div class="invocation-controls">
+        <button class="invocation-btn" id="invokeBtn">
+          🕳️ Invoquer L'Évideur
+        </button>
+        <button class="clear-btn" onclick="clearInput()">
+          Effacer
+        </button>
+      </div>
+    </div>
+
+    <div class="response-area" id="responseArea"></div>
+
+    <div class="signature">
+      Agent Liminal • Observatoire des États Intérieurs • Version 2.0
+    </div>
+  </div>
+
+  <script>
+    const WEBHOOK_URL = 'https://n8n.memoapp.eu/webhook/evideur';
+    const MAX_DAILY_CONSULTATIONS = 3;
+
+    // Initialisation
+    document.addEventListener('DOMContentLoaded', function () {
+      updateConsultationCounter();
+      document.getElementById('situationInput').focus();
+    });
+
+    document.getElementById('invokeBtn').addEventListener('click', async function () {
+      const situation = document.getElementById('situationInput').value.trim();
+      const button = this;
+
+      if (!situation) {
+        showResponse('⚠️ L\'Évideur a besoin de matière pour travailler. Décris ce qui t\'encombre...', 'error');
+        return;
+      }
+
+      // Vérification limite quotidienne
+      if (getTodayConsultationCount() >= MAX_DAILY_CONSULTATIONS) {
+        showResponse('🌙 L\'Évideur respecte le rythme naturel. Reviens demain pour une nouvelle consultation.', 'error');
+        return;
+      }
+
+      // État de chargement
+      button.disabled = true;
+      button.textContent = 'L\'Évideur opère...';
+      showResponse('L\'Agent Liminal analyse ton trop-plein...', 'loading');
+
+      try {
+        const payload = {
+          situation: situation,
+          rituel: 'Papier virtuel plié, Évideur invoqué',
+          timestamp: new Date().toISOString()
+        };
+
+        await callEvideurRealWebhook(payload);
+        incrementConsultationCount();
+
+      } catch (error) {
+        showResponse(`❌ L'invocation a échoué : ${error.message}`, 'error');
+      } finally {
+        button.disabled = false;
+        button.textContent = '🕳️ Invoquer L\'Évideur';
+      }
+    });
+
+    async function callEvideurRealWebhook(payload) {
+      const response = await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        throw new Error(`L'Évideur n'a pas pu être contacté (${response.status})`);
+      }
+
+      const data = await response.json();
+      displayConsultation(data);
+    }
+
+    function displayConsultation(data) {
+      const responseArea = document.getElementById('responseArea');
+
+      const formattedResponse = `
+                <div class="consultation-content">${data.consultation}</div>
+                <div class="consultation-meta">
+                    <div>
+                        ⏰ ${new Date(data.timestamp).toLocaleString('fr-FR')}
+                        <br>🕳️ ${data.signature}
+                    </div>
+                    <button class="save-consultation" onclick="saveConsultation('${data.session_id}', '${escape(data.consultation)}')">
+                        💾 Sauvegarder
+                    </button>
+                </div>
+            `;
+
+      showResponse(formattedResponse);
+
+      // Sauvegarder dans l'historique local
+      saveToHistory(data);
+    }
+
+    function showResponse(content, type = 'success') {
+      const responseArea = document.getElementById('responseArea');
+      responseArea.className = `response-area ${type}`;
+      responseArea.innerHTML = content;
+      responseArea.classList.add('show');
+      responseArea.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function clearInput() {
+      document.getElementById('situationInput').value = '';
+      document.getElementById('situationInput').focus();
+
+      const responseArea = document.getElementById('responseArea');
+      responseArea.classList.remove('show');
+      setTimeout(() => {
+        responseArea.style.display = 'none';
+      }, 400);
+    }
+
+    // Gestion des consultations quotidiennes
+    function getTodayConsultationCount() {
+      const today = new Date().toDateString();
+      const stored = localStorage.getItem('evideur_consultations_' + today);
+      return stored ? parseInt(stored) : 0;
+    }
+
+    function incrementConsultationCount() {
+      const today = new Date().toDateString();
+      const current = getTodayConsultationCount();
+      localStorage.setItem('evideur_consultations_' + today, current + 1);
+      updateConsultationCounter();
+    }
+
+    function updateConsultationCounter() {
+      const count = getTodayConsultationCount();
+      document.getElementById('todayCount').textContent = count;
+
+      // Changer la couleur selon le nombre
+      const counter = document.getElementById('consultationCounter');
+      if (count >= MAX_DAILY_CONSULTATIONS) {
+        counter.style.color = '#e74c3c';
+      } else if (count >= 2) {
+        counter.style.color = '#f39c12';
+      } else {
+        counter.style.color = '#f39c12';
+      }
+    }
+
+    // Historique local
+    function saveToHistory(consultation) {
+      let history = JSON.parse(localStorage.getItem('evideur_history') || '[]');
+      history.unshift({
+        ...consultation,
+        saved_at: new Date().toISOString()
+      });
+
+      // Garder seulement les 10 dernières
+      history = history.slice(0, 10);
+      localStorage.setItem('evideur_history', JSON.stringify(history));
+    }
+
+    function saveConsultation(sessionId, content) {
+      const blob = new Blob([unescape(content)], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `evideur_consultation_${new Date().toISOString().slice(0, 10)}.txt`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function toggleHistory() {
+      const history = JSON.parse(localStorage.getItem('evideur_history') || '[]');
+      if (history.length === 0) {
+        showResponse('📜 Aucune consultation dans l\'historique', 'error');
+        return;
+      }
+
+      let historyHTML = '<h3 style="color: #1abc9c; margin-bottom: 15px;">📜 Historique des Consultations</h3>';
+      history.forEach((item, index) => {
+        const date = new Date(item.timestamp).toLocaleString('fr-FR');
+        historyHTML += `
+                    <div style="margin-bottom: 15px; padding: 10px; background: rgba(26,188,156,0.1); border-radius: 4px; border-left: 3px solid #1abc9c;">
+                        <div style="font-size: 0.9rem; color: #95a5a6; margin-bottom: 5px;">${date}</div>
+                        <div style="font-size: 0.95rem; line-height: 1.4;">${item.consultation.substring(0, 150)}${item.consultation.length > 150 ? '...' : ''}</div>
+                    </div>
+                `;
+      });
+
+      showResponse(historyHTML);
+    }
+
+    // Escape/unescape pour la sauvegarde
+    function escape(str) {
+      return str.replace(/'/g, "\\'").replace(/"/g, '\\"');
+    }
+
+    // Raccourci clavier
+    document.getElementById('situationInput').addEventListener('keydown', function (e) {
+      if (e.ctrlKey && e.key === 'Enter') {
+        document.getElementById('invokeBtn').click();
+      }
+    });
+  </script>
+</body>
+
+</html>

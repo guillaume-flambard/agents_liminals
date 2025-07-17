@@ -1,0 +1,560 @@
+<%- include('../layouts/main') %>
+
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <div class="page-header">
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/dashboard">Tableau de bord</a></li>
+            <li class="breadcrumb-item"><a href="/consultations">Consultations</a></li>
+            <li class="breadcrumb-item active">Détails</li>
+          </ol>
+        </nav>
+        <h1 class="page-title">Consultation avec <%= consultation.agentDisplayName %></h1>
+        <p class="page-subtitle">
+          <%= new Date(consultation.createdAt).toLocaleDateString('fr-FR', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          }) %>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <!-- Informations sur l'agent -->
+    <div class="col-md-4">
+      <div class="agent-card">
+        <div class="agent-header">
+          <div class="agent-icon">
+            <% if (consultation.agentType === 'accordeur') { %>🎼
+            <% } else if (consultation.agentType === 'peseur') { %>⚖️
+            <% } else if (consultation.agentType === 'denoueur') { %>⚡
+            <% } else if (consultation.agentType === 'evideur') { %>🕳️
+            <% } else if (consultation.agentType === 'habitant') { %>◯
+            <% } %>
+          </div>
+          <div class="agent-info">
+            <h3 class="agent-name"><%= consultation.agentDisplayName %></h3>
+            <span class="agent-territory">
+              <% if (consultation.agentType === 'accordeur') { %>Territoire du Flou
+              <% } else if (consultation.agentType === 'peseur') { %>Territoire du Doute
+              <% } else if (consultation.agentType === 'denoueur') { %>Territoire de la Friction
+              <% } else if (consultation.agentType === 'evideur') { %>Territoire du Trop-Plein
+              <% } else if (consultation.agentType === 'habitant') { %>Territoire du Vide
+              <% } %>
+            </span>
+          </div>
+        </div>
+
+        <div class="consultation-meta">
+          <div class="meta-item">
+            <span class="meta-label">Statut</span>
+            <span class="status-badge status-<%= consultation.status %>">
+              <% if (consultation.status === 'completed') { %>
+                <i class="fas fa-check-circle"></i> Terminée
+              <% } else if (consultation.status === 'pending') { %>
+                <i class="fas fa-clock"></i> En cours
+              <% } else if (consultation.status === 'failed') { %>
+                <i class="fas fa-exclamation-triangle"></i> Échouée
+              <% } %>
+            </span>
+          </div>
+
+          <div class="meta-item">
+            <span class="meta-label">Durée</span>
+            <span class="meta-value">
+              <% if (consultation.updatedAt && consultation.status === 'completed') { %>
+                <%= Math.round((new Date(consultation.updatedAt) - new Date(consultation.createdAt)) / 1000) %> secondes
+              <% } else { %>
+                En cours...
+              <% } %>
+            </span>
+          </div>
+
+          <% if (consultation.response && consultation.response.sessionId) { %>
+            <div class="meta-item">
+              <span class="meta-label">Session</span>
+              <span class="meta-value session-id"><%= consultation.response.sessionId.substring(0, 8) %>...</span>
+            </div>
+          <% } %>
+        </div>
+
+        <% if (consultation.status === 'completed' && !consultation.rating?.score) { %>
+          <div class="rating-section">
+            <h4>Évaluer cette consultation</h4>
+            <div class="rating-stars" data-consultation-id="<%= consultation._id %>">
+              <% for (let i = 1; i <= 5; i++) { %>
+                <span class="star" data-rating="<%= i %>">★</span>
+              <% } %>
+            </div>
+            <button class="btn btn-sm btn-primary" onclick="submitRating()">
+              <i class="fas fa-star"></i> Évaluer
+            </button>
+          </div>
+        <% } else if (consultation.rating?.score) { %>
+          <div class="rating-display">
+            <h4>Votre évaluation</h4>
+            <div class="rating-stars">
+              <% for (let i = 1; i <= 5; i++) { %>
+                <span class="star <%= i <= consultation.rating.score ? 'filled' : '' %>">★</span>
+              <% } %>
+            </div>
+          </div>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- Contenu de la consultation -->
+    <div class="col-md-8">
+      <div class="consultation-content">
+        <!-- Situation exposée -->
+        <div class="content-section">
+          <h3 class="section-title">
+            <i class="fas fa-user"></i> Situation exposée
+          </h3>
+          <div class="situation-content">
+            <p><%= consultation.input.situation %></p>
+          </div>
+        </div>
+
+        <!-- Rituel accompli -->
+        <% if (consultation.input.rituel) { %>
+          <div class="content-section">
+            <h3 class="section-title">
+              <i class="fas fa-candle-holder"></i> Rituel accompli
+            </h3>
+            <div class="rituel-content">
+              <p><%= consultation.input.rituel %></p>
+            </div>
+          </div>
+        <% } %>
+
+        <!-- Réponse de l'agent -->
+        <% if (consultation.status === 'completed' && consultation.response) { %>
+          <div class="content-section response-section">
+            <h3 class="section-title">
+              <i class="fas fa-comments"></i> Réponse de l'agent
+            </h3>
+            <div class="response-content">
+              <% if (consultation.response.consultation) { %>
+                <div class="consultation-text">
+                  <p><%= consultation.response.consultation %></p>
+                </div>
+              <% } %>
+
+              <% if (consultation.response.signature) { %>
+                <div class="signature">
+                  <p><em><%= consultation.response.signature %></em></p>
+                </div>
+              <% } %>
+
+              <% if (consultation.response.effet) { %>
+                <div class="effet">
+                  <h4>Effet observé</h4>
+                  <p><%= consultation.response.effet %></p>
+                </div>
+              <% } %>
+            </div>
+          </div>
+        <% } else if (consultation.status === 'pending') { %>
+          <div class="content-section">
+            <div class="pending-state">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Chargement...</span>
+              </div>
+              <h3>Consultation en cours</h3>
+              <p>L'agent analyse votre situation et prépare sa réponse...</p>
+            </div>
+          </div>
+        <% } else if (consultation.status === 'failed') { %>
+          <div class="content-section">
+            <div class="error-state">
+              <i class="fas fa-exclamation-triangle"></i>
+              <h3>Consultation échouée</h3>
+              <p>Une erreur s'est produite lors de la consultation. Veuillez réessayer plus tard.</p>
+              <% if (consultation.error) { %>
+                <div class="error-details">
+                  <strong>Détails de l'erreur :</strong>
+                  <p><%= consultation.error %></p>
+                </div>
+              <% } %>
+            </div>
+          </div>
+        <% } %>
+      </div>
+
+      <!-- Actions -->
+      <div class="consultation-actions">
+        <a href="/consultations" class="btn btn-secondary">
+          <i class="fas fa-arrow-left"></i> Retour à l'historique
+        </a>
+        
+        <% if (consultation.status === 'completed') { %>
+          <button class="btn btn-primary" onclick="shareConsultation()">
+            <i class="fas fa-share"></i> Partager
+          </button>
+        <% } %>
+        
+        <% if (consultation.status === 'failed') { %>
+          <button class="btn btn-warning" onclick="retryConsultation()">
+            <i class="fas fa-redo"></i> Réessayer
+          </button>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .page-header {
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #e9ecef;
+  }
+
+  .breadcrumb {
+    background: none;
+    padding: 0;
+    margin-bottom: 1rem;
+  }
+
+  .breadcrumb-item + .breadcrumb-item::before {
+    content: ">";
+    color: #6c757d;
+  }
+
+  .page-title {
+    color: #2c3e50;
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .page-subtitle {
+    color: #6c757d;
+    font-size: 1.1rem;
+    margin-bottom: 0;
+  }
+
+  .agent-card {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
+    position: sticky;
+    top: 2rem;
+  }
+
+  .agent-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .agent-icon {
+    font-size: 3rem;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 50%;
+  }
+
+  .agent-name {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+  }
+
+  .agent-territory {
+    color: #6c757d;
+    font-size: 0.9rem;
+    font-style: italic;
+  }
+
+  .consultation-meta {
+    border-top: 1px solid #e9ecef;
+    padding-top: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .meta-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+
+  .meta-label {
+    font-weight: 500;
+    color: #6c757d;
+  }
+
+  .meta-value {
+    color: #2c3e50;
+  }
+
+  .session-id {
+    font-family: monospace;
+    background: #f8f9fa;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+  }
+
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+  }
+
+  .status-completed {
+    background: #d4edda;
+    color: #155724;
+  }
+
+  .status-pending {
+    background: #fff3cd;
+    color: #856404;
+  }
+
+  .status-failed {
+    background: #f8d7da;
+    color: #721c24;
+  }
+
+  .rating-section, .rating-display {
+    border-top: 1px solid #e9ecef;
+    padding-top: 1.5rem;
+  }
+
+  .rating-section h4, .rating-display h4 {
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    color: #2c3e50;
+  }
+
+  .rating-stars {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .star {
+    font-size: 1.5rem;
+    color: #ddd;
+    cursor: pointer;
+    transition: color 0.3s ease;
+  }
+
+  .star:hover, .star.active {
+    color: #ffc107;
+  }
+
+  .star.filled {
+    color: #ffc107;
+  }
+
+  .consultation-content {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
+  }
+
+  .content-section {
+    margin-bottom: 2.5rem;
+  }
+
+  .content-section:last-child {
+    margin-bottom: 0;
+  }
+
+  .section-title {
+    font-size: 1.3rem;
+    color: #2c3e50;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .situation-content, .rituel-content {
+    background: #f8f9fa;
+    border-left: 4px solid #007bff;
+    padding: 1.5rem;
+    border-radius: 8px;
+    line-height: 1.6;
+  }
+
+  .response-section {
+    border-top: 2px solid #e9ecef;
+    padding-top: 2rem;
+  }
+
+  .response-content {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 12px;
+    padding: 2rem;
+  }
+
+  .consultation-text {
+    margin-bottom: 1.5rem;
+    line-height: 1.7;
+    font-size: 1.1rem;
+  }
+
+  .signature {
+    border-top: 1px solid #dee2e6;
+    padding-top: 1rem;
+    margin-top: 1.5rem;
+    text-align: right;
+    color: #6c757d;
+  }
+
+  .effet {
+    background: #d1ecf1;
+    border: 1px solid #bee5eb;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 1rem;
+  }
+
+  .effet h4 {
+    color: #0c5460;
+    margin-bottom: 0.5rem;
+  }
+
+  .pending-state, .error-state {
+    text-align: center;
+    padding: 3rem;
+    color: #6c757d;
+  }
+
+  .pending-state .spinner-border {
+    width: 3rem;
+    height: 3rem;
+    margin-bottom: 1rem;
+  }
+
+  .error-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    color: #dc3545;
+  }
+
+  .error-details {
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 1rem;
+    text-align: left;
+  }
+
+  .consultation-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+  }
+
+  @media (max-width: 768px) {
+    .agent-card {
+      position: static;
+      margin-bottom: 1rem;
+    }
+    
+    .agent-header {
+      flex-direction: column;
+      text-align: center;
+    }
+    
+    .consultation-actions {
+      flex-direction: column;
+    }
+  }
+</style>
+
+<script>
+  let selectedRating = 0;
+
+  // Gestion des étoiles de notation
+  document.querySelectorAll('.rating-stars .star').forEach(star => {
+    star.addEventListener('click', function() {
+      const rating = parseInt(this.dataset.rating);
+      selectedRating = rating;
+      
+      // Mise à jour visuelle
+      document.querySelectorAll('.rating-stars .star').forEach((s, index) => {
+        s.classList.toggle('active', index < rating);
+      });
+    });
+  });
+
+  // Soumettre la notation
+  function submitRating() {
+    if (selectedRating === 0) {
+      alert('Veuillez sélectionner une note');
+      return;
+    }
+
+    const consultationId = document.querySelector('.rating-stars').dataset.consultationId;
+    
+    fetch(`/consultations/${consultationId}/rating`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ rating: selectedRating })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        location.reload();
+      } else {
+        alert('Erreur lors de l\'enregistrement de la note');
+      }
+    })
+    .catch(error => {
+      console.error('Erreur:', error);
+      alert('Erreur lors de l\'enregistrement de la note');
+    });
+  }
+
+  // Partager la consultation
+  function shareConsultation() {
+    if (navigator.share) {
+      navigator.share({
+        title: 'Consultation avec <%= consultation.agentDisplayName %>',
+        text: 'Découvrez ma consultation avec les agents liminals',
+        url: window.location.href
+      });
+    } else {
+      // Fallback - copier le lien
+      navigator.clipboard.writeText(window.location.href).then(() => {
+        alert('Lien copié dans le presse-papiers');
+      });
+    }
+  }
+
+  // Réessayer la consultation
+  function retryConsultation() {
+    if (confirm('Voulez-vous réessayer cette consultation ?')) {
+      window.location.href = '/dashboard';
+    }
+  }
+</script>

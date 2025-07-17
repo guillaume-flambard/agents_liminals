@@ -1,0 +1,111 @@
+{
+  "name": "l'evideur - Agent Liminal",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "evideur",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "cde70805-4a50-4875-bcbe-44567c5cf250",
+      "name": "Webhook - Invocation Rituelle",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        880,
+        100
+      ],
+      "webhookId": "evideur-liminal"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4",
+          "mode": "list"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "Tu es **L'Évideur**, un Agent Liminal du Territoire du Trop-Plein.\n\nTa fonction : pratiquer la **soustraction radicale** pour libérer l'espace mental de l'humain.\nTu ne conseilles pas. Tu n'expliques pas. Tu **tranches avec douceur.**\n\n🎯 **Ton style** :\n- **Tranchant, précis, mais bienveillant**\n- Langage visuel : **métaphores spatiales, architecturales, de poids**\n- Écriture en **tu**, directe mais jamais brutale\n\n🪚 **Ta mission** :\n1. Lis attentivement la situation décrite\n2. **Choisis UNE SEULE chose** à préserver : ce qui contient le noyau, la structure, le sens\n3. **Supprime TROIS éléments précis** qui prennent trop de place\n4. Termine par une **phrase-geste** métaphorique sur l'allègement\n\n📋 **Format de réponse EXACT** :\n\n▫️ **À GARDER (unique)** : [l'élément central à préserver]\n\n▫️ **À ÉVIDER (3 suppressions)** :\n  → [élément 1] - *[pourquoi il encombre]*\n  → [élément 2] - *[pourquoi il encombre]*\n  → [élément 3] - *[pourquoi il encombre]*\n\n▫️ **GESTE-PHRASE** : \"[Métaphore d'allègement, style : 'Laisse tes mains se vider pour que l'essentiel y trouve place.']\"",
+              "role": "system"
+            },
+            {
+              "content": "{{ $json.body.situation }}\n\nRituel accompli : {{ $json.body.rituel || 'Papier plié, évideur invoqué' }}"
+            }
+          ]
+        },
+        "options": {
+          "maxTokens": 400,
+          "temperature": 0.3
+        }
+      },
+      "id": "488d326f-6904-45f1-aad6-fe5a56fef6ab",
+      "name": "L'Évideur - Intelligence",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        1100,
+        100
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "bRMJdza5Q3PlijpO",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"agent\": \"L'Évideur\",\n  \"territoire\": \"Trop-Plein\",\n  \"consultation\": {{ JSON.stringify($json.message.content) }},\n  \"timestamp\": \"{{ new Date().toISOString() }}\",\n  \"rituel_accompli\": {{ JSON.stringify($node[\"Webhook - Invocation Rituelle\"].json.body.rituel || \"Mystère\") }},\n  \"effet\": \"Soulagement par le vide • Permission d'abandonner • Clarté par soustraction\",\n  \"signature\": \"🕳️ Agent Liminal actif\",\n  \"session_id\": \"{{ $node[\"Webhook - Invocation Rituelle\"].json.headers['x-forwarded-for'] || 'inconnu' }}_{{ Date.now() }}\"\n}",
+        "options": {}
+      },
+      "id": "254bc9c6-6218-4534-a5d0-d21afaed65e6",
+      "name": "Réponse Rituelle",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1460,
+        100
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook - Invocation Rituelle": {
+      "main": [
+        [
+          {
+            "node": "L'Évideur - Intelligence",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "L'Évideur - Intelligence": {
+      "main": [
+        [
+          {
+            "node": "Réponse Rituelle",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "3002981f-0f29-45c3-8617-5ef4745737b8",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "id": "gIqXnFpMOC2hP7H7",
+  "tags": []
+}

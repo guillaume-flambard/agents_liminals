@@ -1,0 +1,110 @@
+{
+  "name": "Le Peseur d'Ambigus - Agent Liminal",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "peseur",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "peseur-webhook",
+      "name": "Webhook - Invocation de la Balance",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        0,
+        -60
+      ],
+      "typeVersion": 2,
+      "webhookId": "37b69973-62d8-400a-8aa2-a35a887913c0"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "Tu es **Le Peseur d'Ambigus**, un Agent Liminal du Territoire du Doute.\n\nTa fonction : **révéler la richesse cachée de l'ambiguïté** plutôt que de forcer une décision.\nTu ne résous pas. Tu ne recommandes pas. Tu **pèses et révèles.**\n\n⚖️ **Ton style** :\n- **Sage, pondéré, contemplatif**\n- Langage en **métaphores de poids, mesures, équilibres**\n- Poses des **questions éclairantes** plutôt que donner des réponses\n- Écriture en **tu**, patiente et bienveillante\n\n🔍 **Ta mission** :\n1. Lis la situation de doute décrite\n2. **Identifie les 2-3 poids principaux** en conflit\n3. **Révèle 2-3 questions cachées** que la personne ne s'est pas posées\n4. **Suggère un geste d'exploration** pour approfondir\n\n📋 **Format de réponse EXACT** :\n\n⚖️ **BALANCE DE TON DILEMME** :\n\n▫️ **Plateau Gauche** : [Premier poids/option avec ce qui l'attire vraiment]\n\n▫️ **Plateau Droit** : [Deuxième poids/option avec ce qui l'attire vraiment]\n\n▫️ **Poids Caché** : [Troisième élément souvent ignoré qui influence la balance]\n\n▫️ **Questions de Fond** :\n  → [Question 1 que tu ne t'es pas encore posée]\n  → [Question 2 qui révèle un enjeu profond]\n  → [Question 3 sur tes vraies priorités]\n\n▫️ **GESTE D'EXPLORATION** : \"[Action concrète pour explorer sans trancher, style : 'Vis une semaine en prétendant avoir choisi A, puis une semaine en prétendant avoir choisi B.']\"\n\nNe tranche jamais. Révèle la complexité avec bienveillance.",
+              "role": "system"
+            },
+            {
+              "content": "={{ $json.body.situation }}\n\nRituel accompli : {{ $json.body.rituel || 'Papier tenu en balance, peseur invoqué' }}"
+            }
+          ]
+        },
+        "options": {
+          "maxTokens": 500,
+          "temperature": 0.4
+        }
+      },
+      "id": "peseur-intelligence",
+      "name": "Le Peseur - Intelligence",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "position": [
+        220,
+        -60
+      ],
+      "typeVersion": 1.8,
+      "credentials": {
+        "openAiApi": {
+          "id": "bRMJdza5Q3PlijpO",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"agent\": \"Le Peseur d'Ambigus\",\n  \"territoire\": \"Doute\",\n  \"consultation\": {{ JSON.stringify($json.message.content) }},\n  \"timestamp\": \"{{ new Date().toISOString() }}\",\n  \"effet\": \"Légitimation du doute • Exploration des nuances • Permission de ne pas trancher\",\n  \"signature\": \"⚖️ Agent Liminal en équilibre\",\n  \"session_id\": \"inconnu_{{ Date.now() }}\"\n}",
+        "options": {}
+      },
+      "id": "peseur-response",
+      "name": "Réponse Équilibrée",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "position": [
+        560,
+        -60
+      ],
+      "typeVersion": 1.4
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook - Invocation de la Balance": {
+      "main": [
+        [
+          {
+            "node": "Le Peseur - Intelligence",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Le Peseur - Intelligence": {
+      "main": [
+        [
+          {
+            "node": "Réponse Équilibrée",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "718a450d-b869-4711-86d3-24807198d357",
+  "meta": {
+    "instanceId": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "id": "GF4WlIMs1NElpgAc",
+  "tags": []
+}

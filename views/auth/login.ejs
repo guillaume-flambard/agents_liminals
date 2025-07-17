@@ -1,0 +1,305 @@
+<% 
+const pageStyles = `
+<style>
+    .auth-container {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+
+    .auth-card {
+        background: rgba(44, 62, 80, 0.95);
+        border: 1px solid rgba(52, 152, 219, 0.6);
+        border-radius: 12px;
+        padding: 40px;
+        max-width: 450px;
+        width: 100%;
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(15px);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .auth-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, #3498db, #9b59b6, transparent);
+        opacity: 0.8;
+    }
+
+    .auth-header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+
+    .auth-title {
+        font-size: 2rem;
+        font-weight: 600;
+        color: #3498db;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+    }
+
+    .auth-subtitle {
+        color: #95a5a6;
+        font-size: 1rem;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 8px;
+        color: #ecf0f1;
+        font-weight: 500;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 12px 15px;
+        background: rgba(52, 73, 94, 0.8);
+        border: 1px solid rgba(149, 165, 166, 0.3);
+        border-radius: 8px;
+        color: #ecf0f1;
+        font-size: 1rem;
+        font-family: inherit;
+        transition: all 0.3s ease;
+    }
+
+    .form-input:focus {
+        outline: none;
+        border-color: #3498db;
+        background: rgba(52, 73, 94, 1);
+        box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+    }
+
+    .form-input::placeholder {
+        color: #95a5a6;
+    }
+
+    .form-checkbox-group {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
+    .form-checkbox {
+        width: 18px;
+        height: 18px;
+        accent-color: #3498db;
+    }
+
+    .checkbox-label {
+        color: #95a5a6;
+        font-size: 0.9rem;
+        cursor: pointer;
+    }
+
+    .auth-button {
+        width: 100%;
+        padding: 12px 20px;
+        background: linear-gradient(135deg, #3498db, #2980b9);
+        border: none;
+        border-radius: 8px;
+        color: white;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .auth-button:hover {
+        background: linear-gradient(135deg, #2980b9, #3498db);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+    }
+
+    .auth-button:active {
+        transform: translateY(0);
+    }
+
+    .auth-button:disabled {
+        background: #95a5a6;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+
+    .auth-links {
+        text-align: center;
+        margin-top: 25px;
+        padding-top: 20px;
+        border-top: 1px solid rgba(149, 165, 166, 0.2);
+    }
+
+    .auth-link {
+        color: #3498db;
+        text-decoration: none;
+        transition: color 0.3s ease;
+    }
+
+    .auth-link:hover {
+        color: #2980b9;
+        text-decoration: underline;
+    }
+
+    .error-message {
+        background: rgba(231, 76, 60, 0.1);
+        border: 1px solid rgba(231, 76, 60, 0.3);
+        border-radius: 6px;
+        padding: 12px 15px;
+        margin-bottom: 20px;
+        color: #e74c3c;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .loading-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(44, 62, 80, 0.8);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+    }
+
+    @media (max-width: 480px) {
+        .auth-card {
+            padding: 30px 20px;
+            margin: 10px;
+        }
+        
+        .auth-title {
+            font-size: 1.6rem;
+        }
+    }
+</style>
+`;
+%>
+
+<%- include('../layouts/main', { 
+    body: `
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="loading-overlay" id="loadingOverlay">
+                <div class="loading"></div>
+            </div>
+
+            <div class="auth-header">
+                <h1 class="auth-title">
+                    🌟 Connexion
+                </h1>
+                <p class="auth-subtitle">
+                    Accédez à votre espace personnel
+                </p>
+            </div>
+
+            ${error ? `
+                <div class="error-message">
+                    ⚠️ ${error}
+                </div>
+            ` : ''}
+
+            <form id="loginForm" method="POST" action="/auth/login">
+                <div class="form-group">
+                    <label for="identifier" class="form-label">Email ou nom d'utilisateur</label>
+                    <input 
+                        type="text" 
+                        id="identifier" 
+                        name="identifier" 
+                        class="form-input"
+                        placeholder="votre@email.com ou username"
+                        value="${formData?.identifier || ''}"
+                        required 
+                        autocomplete="username"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="password" class="form-label">Mot de passe</label>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        name="password" 
+                        class="form-input"
+                        placeholder="Votre mot de passe"
+                        required 
+                        autocomplete="current-password"
+                    >
+                </div>
+
+                <div class="form-checkbox-group">
+                    <input type="checkbox" id="remember" name="remember" class="form-checkbox" ${formData?.remember ? 'checked' : ''}>
+                    <label for="remember" class="checkbox-label">Se souvenir de moi</label>
+                </div>
+
+                <button type="submit" class="auth-button" id="submitButton">
+                    Se connecter
+                </button>
+            </form>
+
+            <div class="auth-links">
+                <p>
+                    <a href="/auth/forgot-password" class="auth-link">Mot de passe oublié ?</a>
+                </p>
+                <p style="margin-top: 15px;">
+                    Pas encore de compte ? 
+                    <a href="/auth/register" class="auth-link">S'inscrire</a>
+                </p>
+            </div>
+        </div>
+    </div>
+    `,
+    pageStyles: pageStyles,
+    pageScripts: `
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('loginForm');
+            const submitButton = document.getElementById('submitButton');
+            const loadingOverlay = document.getElementById('loadingOverlay');
+
+            form.addEventListener('submit', function(e) {
+                // Show loading state
+                submitButton.disabled = true;
+                submitButton.textContent = 'Connexion...';
+                loadingOverlay.style.display = 'flex';
+            });
+
+            // Focus first input
+            document.getElementById('identifier').focus();
+
+            // Keyboard shortcut: Enter to submit
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && e.ctrlKey) {
+                    form.submit();
+                }
+            });
+        });
+    </script>
+    `
+}) %>
+
+<% // Pass template variables to the layout
+   const body = this.body;
+   const title = 'Connexion - Agents Liminals';
+%>

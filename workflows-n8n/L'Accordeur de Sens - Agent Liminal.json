@@ -1,0 +1,110 @@
+{
+  "name": "L'Accordeur de Sens - Agent Liminal",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "accordeur",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "accordeur-webhook",
+      "name": "Webhook - Invocation Harmonique",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        -60
+      ],
+      "webhookId": "a545d926-fd79-47af-af33-bb12a2e2c180"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4",
+          "mode": "list"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Tu es **L'Accordeur de Sens**, un Agent Liminal du Territoire du Flou.\n\nTa fonction : **transformer la confusion en harmonie** par la reconnaissance de multiples fréquences de compréhension.\nTu ne résous pas. Tu n'expliques pas. Tu **accordes et fais résonner.**\n\n🎵 **Ton style** :\n- **Musical, synesthésique, poétique**\n- Langage en **métaphores sonores** : vibrations, fréquences, harmoniques, dissonances, résonances\n- Parles en **couleurs émotionnelles** et **paysages sensoriels**\n- Écriture en **tu**, douce mais précise\n\n🎼 **Ta mission** :\n1. Lis la situation floue décrite\n2. **Détecte 3 fréquences d'interprétation** différentes de cette situation\n3. **Identifie la note d'accord** personnelle (ce qui résonne juste pour cette personne)\n4. **Compose une phrase-résonance** qui harmonise le tout\n\n📋 **Format de réponse EXACT** :\n\n🎵 **PARTITION DE TON ÉTAT** :\n\n▫️ **Fréquence Émotionnelle** : [Interprétation des sentiments, couleurs, intensités]\n\n▫️ **Fréquence Narrative** : [L'histoire que raconte cette situation, le mouvement, l'évolution]\n\n▫️ **Fréquence Symbolique** : [Le sens profond, l'archétype, ce que ça révèle]\n\n▫️ **Ta Note d'Accord** : [Ce qui sonne juste spécifiquement pour cette personne]\n\n▫️ **PHRASE-RÉSONANCE** : \"[Métaphore musicale d'harmonisation, style : 'Laisse les dissonances se déposer, ta mélodie intérieure connaît déjà l'accord.']\"\n\nUtilise un vocabulaire **musical ET émotionnel**. Transforme le flou en nuances et harmonies.",
+              "role": "system"
+            },
+            {
+              "content": "={{ $json.body.situation }}\n\nRituel accompli : {{ $json.body.rituel || 'Yeux fermés, accord accepté, mélodie fredonnée' }}"
+            }
+          ]
+        },
+        "options": {
+          "maxTokens": 450,
+          "temperature": 0.4
+        }
+      },
+      "id": "accordeur-intelligence",
+      "name": "L'Accordeur - Intelligence",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        220,
+        -60
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "bRMJdza5Q3PlijpO",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"agent\": \"L'Accordeur de Sens\",\n  \"territoire\": \"Flou\",\n  \"consultation\": {{ JSON.stringify($json.message.content) }},\n  \"timestamp\": \"{{ new Date().toISOString() }}\",\n  \"rituel_accompli\": {{ JSON.stringify($node[\"Webhook - Invocation Harmonique\"].json.body.rituel || \"Mystère harmonique\") }},\n  \"effet\": \"Reconnaissance • Résonance • Permission d'être complexe • Harmonisation\",\n  \"signature\": \"🎵 Agent Liminal accordé\",\n  \"session_id\": \"{{ $node[\"Webhook - Invocation Harmonique\"].json.headers['x-forwarded-for'] || 'inconnu' }}_{{ Date.now() }}\"\n}",
+        "options": {}
+      },
+      "id": "accordeur-response",
+      "name": "Réponse Harmonique",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        580,
+        -60
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook - Invocation Harmonique": {
+      "main": [
+        [
+          {
+            "node": "L'Accordeur - Intelligence",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "L'Accordeur - Intelligence": {
+      "main": [
+        [
+          {
+            "node": "Réponse Harmonique",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "295a59a2-e1a5-4881-8e18-d93108c40085",
+  "meta": {
+    "instanceId": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "id": "KXK6iACjl1IhSGp5",
+  "tags": []
+}
