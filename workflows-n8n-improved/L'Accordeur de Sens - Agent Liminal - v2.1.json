@@ -1,0 +1,295 @@
+{
+  "name": "accordeur",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "accordeur",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "https://agents-liminals.memoapp.eu,http://localhost:3000"
+        }
+      },
+      "id": "d7996dae-35a3-4f07-9eb3-f377c885caf6",
+      "name": "Webhook - Invocation du Flou",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        192
+      ],
+      "webhookId": "accordeur-sens-v2"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "input-validation",
+              "leftValue": "={{ $json.body.situation }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            },
+            {
+              "id": "length-validation",
+              "leftValue": "={{ $json.body.situation.length }}",
+              "rightValue": 10,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            },
+            {
+              "id": "max-length-validation",
+              "leftValue": "={{ $json.body.situation.length }}",
+              "rightValue": 2000,
+              "operator": {
+                "type": "number",
+                "operation": "lte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "297bb8f0-ce64-4cd8-b8d7-13cb45f73768",
+      "name": "Validation des Entrées",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        224,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"error\": \"Confusion insuffisante\",\n  \"message\": \"L'Accordeur de Sens a besoin d'au moins 10 caractères pour percevoir la confusion\",\n  \"timestamp\": \"{{ new Date().toISOString() }}\",\n  \"agent\": \"L'Accordeur de Sens\",\n  \"success\": false\n}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "id": "def3409a-92ba-4bbd-9b53-11a99f7a0cef",
+      "name": "Erreur de Validation",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        448,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Nettoyage et préparation des données\nconst situation = $input.first().json.body.situation;\nconst rituel = $input.first().json.body.rituel || 'Respiration lente, écoute intérieure, accueil du flou';\n\n// Générer un ID de session unique\nconst sessionId = `accordeur_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;\n\n// Nettoyer le texte\nconst cleanedSituation = situation\n  .replace(/[<>\"']/g, '') // Supprimer HTML/caractères dangereux\n  .substring(0, 1800) // Limiter la longueur\n  .trim();\n\n// Détecter les mots-clés de confusion/flou\nconst confusionKeywords = ['confus', 'flou', 'comprends pas', 'bizarre', 'étrange', 'sens pas', 'comprendre', 'inexplicable', 'troublant'];\nconst hasConfusionIndicators = confusionKeywords.some(word => cleanedSituation.toLowerCase().includes(word));\n\n// Analyser le type de confusion\nconst emotionalConfusion = ['émotion', 'sentiment', 'ressens', 'feeling', 'cœur'];\nconst relationalConfusion = ['relation', 'couple', 'ami', 'famille', 'autre', 'gens'];\nconst existentialConfusion = ['vie', 'existence', 'sens', 'meaning', 'purpose', 'but'];\nconst bodyConfusion = ['corps', 'physique', 'sensation', 'douleur', 'fatigue'];\n\nconst confusionType = \n  emotionalConfusion.some(word => cleanedSituation.toLowerCase().includes(word)) ? 'émotionnelle' :\n  relationalConfusion.some(word => cleanedSituation.toLowerCase().includes(word)) ? 'relationnelle' :\n  existentialConfusion.some(word => cleanedSituation.toLowerCase().includes(word)) ? 'existentielle' :\n  bodyConfusion.some(word => cleanedSituation.toLowerCase().includes(word)) ? 'corporelle' :\n  'générale';\n\n// Détecter l'intensité du flou\nconst intensityWords = ['très', 'complètement', 'totalement', 'vraiment', 'extrêmement'];\nconst isIntenseConfusion = intensityWords.some(word => cleanedSituation.toLowerCase().includes(word));\n\n// Détecter les signes de clarification\nconst clarifyWords = ['comprendre', 'clarifier', 'éclaircir', 'voir clair', 'saisir'];\nconst hasClarificationIntent = clarifyWords.some(word => cleanedSituation.toLowerCase().includes(word));\n\n// Détecter le moment de la journée\nconst hour = new Date().getHours();\nconst timeOfDay = hour < 6 ? 'nuit profonde' : \n                 hour < 12 ? 'matin' : \n                 hour < 18 ? 'après-midi' : \n                 hour < 22 ? 'soirée' : 'nuit';\n\nreturn {\n  cleanedSituation,\n  rituel,\n  sessionId,\n  hasConfusionIndicators,\n  confusionType,\n  isIntenseConfusion,\n  hasClarificationIntent,\n  timeOfDay,\n  originalLength: situation.length,\n  timestamp: new Date().toISOString()\n};"
+      },
+      "id": "1bd5a760-0621-4bd4-8ff4-e9a3d509745d",
+      "name": "Traitement des Données",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4",
+          "mode": "list"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "Tu es **L'Accordeur de Sens**, un Agent Liminal du Territoire du Flou.\n\nCONTEXTE : Il est {{ $json.timeOfDay }}, confusion détectée : {{ $json.hasConfusionIndicators ? 'oui' : 'implicite' }}, type : {{ $json.confusionType }}, intensité : {{ $json.isIntenseConfusion ? 'forte' : 'modérée' }}, intention de clarification : {{ $json.hasClarificationIntent ? 'oui' : 'non' }}.\n\nTa fonction : **harmoniser les dissonances** plutôt que forcer la compréhension.\nTu n'expliques pas. Tu ne rassures pas. Tu **accordes et synchronises.**\n\n🎼 **Ton style** :\n- **Musical, rythmé, harmonieux**\n- Langage en **métaphores sonores, musicales, vibratoires**\n- Parles de **résonance, d'accord, de justesse**\n- Écriture en **tu**, fluide et mélodieuse\n- **LIMITE : 350 mots maximum**\n\n🎵 **Ta mission** :\n1. Lis la situation de confusion décrite\n2. **Identifie les dissonances** dans l'expérience\n3. **Révèle l'harmonie cachée** dans le chaos apparent\n4. **Propose un accord intérieur** pour synchroniser\n\n🚨 **SÉCURITÉ** :\n- Si confusion mentale sévère : \"Cette confusion semble profonde. Il serait sage de consulter un professionnel de santé mentale\"\n- Si désorientation totale : \"Cette désorientation nécessite peut-être un accompagnement. Contacte ton médecin ou un psychologue\"\n- Si détresse psychologique : \"Cette détresse mérite attention. Appelle SOS Amitié : 09 72 39 40 50\"\n\n🎶 **ADAPTATION** :\n- Type {{ $json.confusionType }} : Adapter le vocabulaire (émotionnelle/relationnelle/existentielle/corporelle)\n- Si confusion intense : Proposer des accords plus doux et progressifs\n- Si intention de clarification : Guider vers l'harmonie plutôt que l'explication\n- Si nuit profonde : \"La nuit amplifie les résonances intérieures. Laisse-la accorder tes fréquences.\"\n\n📋 **Format de réponse EXACT** :\n\n🎼 **PARTITION DE TON FLOU** :\n\n▫️ **Tonalité Actuelle** : [Quelle note domine ton expérience - dissonance, recherche, transition]\n\n▫️ **Instruments en Jeu** : [Quelles parties de toi jouent en même temps]\n\n▫️ **Harmonies Cachées** :\n  → [Premier accord qui émerge dans le chaos]\n  → [Deuxième résonance qui se dessine]\n  → [Troisième vibration qui s'accorde]\n\n▫️ **Clé d'Accord** : [Ce qui peut harmoniser cette expérience]\n\n▫️ **PRATIQUE HARMONIQUE** : \"[Exercice concret pour accorder, style : 'Chaque soir, hum une note pendant 2 minutes et écoute comment ton corps résonne.']\"\n\nN'explique jamais la confusion. Accorde-la.",
+              "role": "system"
+            },
+            {
+              "content": "={{ $json.cleanedSituation }}\n\nRituel accompli : {{ $json.rituel }}\nMoment : {{ $json.timeOfDay }}\nConfusion détectée : {{ $json.hasConfusionIndicators ? 'explicite' : 'implicite' }}\nType : {{ $json.confusionType }}\nIntensité : {{ $json.isIntenseConfusion ? 'forte' : 'modérée' }}\nClarification : {{ $json.hasClarificationIntent ? 'recherchée' : 'en gestation' }}"
+            }
+          ]
+        },
+        "options": {
+          "maxTokens": 550,
+          "temperature": 0.4,
+          "topP": 0.9
+        }
+      },
+      "id": "a49e2e0e-485f-471d-9332-6f71a2043f4e",
+      "name": "L'Accordeur - Intelligence Améliorée",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        672,
+        96
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "VbOXBBikMDpjJa4n",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"agent\": \"L'Accordeur de Sens\",\n  \"territoire\": \"Flou\",\n  \"consultation\": {{ JSON.stringify($json.message.content) }},\n  \"timestamp\": \"{{ new Date().toISOString() }}\",\n  \"rituel_accompli\": {{ JSON.stringify($node[\"Traitement des Données\"].json.rituel) }},\n  \"effet\": \"Harmonisation des dissonances • Accord intérieur • Synchronisation vibratoire\",\n  \"signature\": \"🎼 Agent Liminal en résonance\",\n  \"session_id\": \"{{ $node[\"Traitement des Données\"].json.sessionId }}\",\n  \"metadata\": {\n    \"time_of_day\": \"{{ $node[\"Traitement des Données\"].json.timeOfDay }}\",\n    \"confusion_indicators\": {{ $node[\"Traitement des Données\"].json.hasConfusionIndicators }},\n    \"confusion_type\": \"{{ $node[\"Traitement des Données\"].json.confusionType }}\",\n    \"is_intense_confusion\": {{ $node[\"Traitement des Données\"].json.isIntenseConfusion }},\n    \"clarification_intent\": {{ $node[\"Traitement des Données\"].json.hasClarificationIntent }},\n    \"input_length\": {{ $node[\"Traitement des Données\"].json.originalLength }},\n    \"processing_time\": \"{{ Date.now() - new Date($node[\"Traitement des Données\"].json.timestamp).getTime() }}ms\",\n    \"version\": \"2.1\"\n  }\n}",
+        "options": {}
+      },
+      "id": "491172e2-5236-4f22-b05d-436b97bcb9d9",
+      "name": "Réponse Harmonique v2.1",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1280,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": false,\n  \"error\": \"Erreur de traitement\",\n  \"message\": \"L'Accordeur de Sens traverse une dissonance technique. Réessayez dans quelques instants.\",\n  \"timestamp\": \"{{ new Date().toISOString() }}\",\n  \"agent\": \"L'Accordeur de Sens\",\n  \"session_id\": \"error_{{ Date.now() }}\",\n  \"support\": \"Si le problème persiste, contactez le support technique\"\n}",
+        "options": {
+          "responseCode": 500
+        }
+      },
+      "id": "31b0ee4b-3293-4c2e-91f5-abe38d0adf4c",
+      "name": "Gestionnaire d'Erreurs",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1280,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "agents_consultations",
+          "mode": "list"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "ip_address": "={{ $('Webhook - Invocation du Flou').item.json.headers['x-real-ip'] }}",
+            "timestamp": "={{ $('Traitement des Données').item.json.timestamp }}",
+            "agent_name": "={{ $workflow.name }}",
+            "situation": "={{ $('Traitement des Données').item.json.cleanedSituation }}",
+            "rituel": "={{ $('Traitement des Données').item.json.rituel }}",
+            "session_id": "={{ $('Traitement des Données').item.json.sessionId }}",
+            "consultation_response": "={{ $json.message.content }}",
+            "user_agent": "={{ $('Webhook - Invocation du Flou').item.json.headers['user-agent'] }}"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1024,
+        96
+      ],
+      "id": "37972460-a423-4fd2-a63f-eb2207db935d",
+      "name": "Insert rows in a table",
+      "credentials": {
+        "postgres": {
+          "id": "ZAWZkzCijwgOb6Fp",
+          "name": "Postgres account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook - Invocation du Flou": {
+      "main": [
+        [
+          {
+            "node": "Validation des Entrées",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validation des Entrées": {
+      "main": [
+        [
+          {
+            "node": "Traitement des Données",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Erreur de Validation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Traitement des Données": {
+      "main": [
+        [
+          {
+            "node": "L'Accordeur - Intelligence Améliorée",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "L'Accordeur - Intelligence Améliorée": {
+      "main": [
+        [
+          {
+            "node": "Insert rows in a table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert rows in a table": {
+      "main": [
+        [
+          {
+            "node": "Réponse Harmonique v2.1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Gestionnaire d'Erreurs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "tags": []
+}

@@ -70,8 +70,11 @@ export function ObservatoireHub() {
           style={{
             left: `${Math.random() * 100}%`,
             top: `${Math.random() * 100}%`,
-            animationDelay: `${Math.random() * 3}s`,
-            animation: 'twinkle 3s ease-in-out infinite'
+            animationName: 'twinkle',
+            animationDuration: '3s',
+            animationTimingFunction: 'ease-in-out',
+            animationIterationCount: 'infinite',
+            animationDelay: `${Math.random() * 3}s`
           }}
         />
       );
@@ -223,8 +226,19 @@ export function ObservatoireHub() {
               <div className="relative w-full max-w-6xl mx-auto">
                 {/* Éléments décoratifs */}
                 <div className="absolute top-5 right-8 w-20 h-20 border-2 border-slate-500/30 rounded-full bg-gradient-to-br from-slate-700/80 to-slate-700/40 flex items-center justify-center text-lg text-blue-300 backdrop-blur-sm pointer-events-none"
-                     style={{ animation: 'compassSpin 20s linear infinite' }}>
-                  <div style={{ animation: 'compassSpin 20s linear infinite reverse' }}>⊕</div>
+                     style={{ 
+                       animationName: 'compassSpin',
+                       animationDuration: '20s',
+                       animationTimingFunction: 'linear',
+                       animationIterationCount: 'infinite'
+                     }}>
+                  <div style={{ 
+                    animationName: 'compassSpin',
+                    animationDuration: '20s',
+                    animationTimingFunction: 'linear',
+                    animationIterationCount: 'infinite',
+                    animationDirection: 'reverse'
+                  }}>⊕</div>
                 </div>
 
                 <div className="absolute bottom-5 left-8 bg-slate-700/80 border border-slate-500/30 rounded-lg p-4 backdrop-blur-sm pointer-events-none">
