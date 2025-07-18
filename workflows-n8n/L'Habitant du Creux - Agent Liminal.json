@@ -1,75 +1,235 @@
 {
-  "name": "L'Habitant du Creux - Agent Liminal",
+  "name": "habitant",
   "nodes": [
     {
       "parameters": {
         "httpMethod": "POST",
         "path": "habitant",
         "responseMode": "responseNode",
-        "options": {}
+        "options": {
+          "allowedOrigins": "https://agents-liminals.memoapp.eu,http://localhost:3000"
+        }
       },
-      "id": "habitant-webhook",
+      "id": "6db2ed51-6bae-4418-8977-6300298931ac",
       "name": "Webhook - Invocation du Vide",
       "type": "n8n-nodes-base.webhook",
-      "position": [
-        0,
-        -60
-      ],
       "typeVersion": 2,
-      "webhookId": "824a024f-5e46-4b6c-8683-676b525b60b2"
+      "position": [
+        -1200,
+        144
+      ],
+      "webhookId": "habitant-void-v2"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "input-validation",
+              "leftValue": "={{ $json.body.situation }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            },
+            {
+              "id": "length-validation",
+              "leftValue": "={{ $json.body.situation.length }}",
+              "rightValue": 10,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            },
+            {
+              "id": "max-length-validation",
+              "leftValue": "={{ $json.body.situation.length }}",
+              "rightValue": 2000,
+              "operator": {
+                "type": "number",
+                "operation": "lte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "bfcb2a4f-fb31-403f-8537-ce40fa8d9ab2",
+      "name": "Validation des Entrées",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -976,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"error\": \"Vide insuffisant\",\n  \"message\": \"L'Habitant du Creux a besoin d'au moins 10 caractères pour percevoir le vide\",\n  \"timestamp\": \"{{ new Date().toISOString() }}\",\n  \"agent\": \"L'Habitant du Creux\",\n  \"success\": false\n}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "id": "7b7ca2b4-a5a0-46a6-9794-0350d0bf1063",
+      "name": "Erreur de Validation",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        -752,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Nettoyage et préparation des données\nconst situation = $input.first().json.body.situation;\nconst rituel = $input.first().json.body.rituel || 'Assis confortablement, mains sur ventre, vide accueilli';\n\n// Générer un ID de session unique\nconst sessionId = `habitant_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;\n\n// Nettoyer le texte\nconst cleanedSituation = situation\n  .replace(/[<>\"']/g, '') // Supprimer HTML/caractères dangereux\n  .substring(0, 1800) // Limiter la longueur\n  .trim();\n\n// Détecter les mots-clés de vide/manque\nconst voidKeywords = ['vide', 'manque', 'absence', 'seul', 'solitude', 'rien', 'creux', 'vide', 'néant', 'isolé'];\nconst hasVoidIndicators = voidKeywords.some(word => cleanedSituation.toLowerCase().includes(word));\n\n// Analyser le type de vide\nconst emotionalVoidKeywords = ['cœur', 'amour', 'affection', 'tendresse', 'emotion', 'sentiment'];\nconst purposeVoidKeywords = ['sens', 'but', 'objectif', 'direction', 'meaning', 'purpose'];\nconst socialVoidKeywords = ['ami', 'famille', 'social', 'entourage', 'relation', 'lien'];\nconst creativeVoidKeywords = ['créer', 'créativité', 'inspiration', 'passion', 'projet'];\n\nconst voidType = \n  emotionalVoidKeywords.some(word => cleanedSituation.toLowerCase().includes(word)) ? 'émotionnel' :\n  purposeVoidKeywords.some(word => cleanedSituation.toLowerCase().includes(word)) ? 'sens' :\n  socialVoidKeywords.some(word => cleanedSituation.toLowerCase().includes(word)) ? 'social' :\n  creativeVoidKeywords.some(word => cleanedSituation.toLowerCase().includes(word)) ? 'créatif' :\n  'existentiel';\n\n// Détecter la profondeur du vide\nconst depthWords = ['profond', 'abyssal', 'immense', 'total', 'complet', 'absolu'];\nconst isDeepVoid = depthWords.some(word => cleanedSituation.toLowerCase().includes(word));\n\n// Détecter les signes de renouveau\nconst renewalWords = ['nouveau', 'changement', 'transition', 'début', 'commencer', 'renouveau'];\nconst hasRenewalSigns = renewalWords.some(word => cleanedSituation.toLowerCase().includes(word));\n\n// Détecter le moment de la journée\nconst hour = new Date().getHours();\nconst timeOfDay = hour < 6 ? 'nuit profonde' : \n                 hour < 12 ? 'matin' : \n                 hour < 18 ? 'après-midi' : \n                 hour < 22 ? 'soirée' : 'nuit';\n\nreturn {\n  cleanedSituation,\n  rituel,\n  sessionId,\n  hasVoidIndicators,\n  voidType,\n  isDeepVoid,\n  hasRenewalSigns,\n  timeOfDay,\n  originalLength: situation.length,\n  timestamp: new Date().toISOString()\n};"
+      },
+      "id": "5c201260-3c0f-4125-948e-0fe88dddc609",
+      "name": "Traitement des Données",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -752,
+        48
+      ]
     },
     {
       "parameters": {
         "modelId": {
           "__rl": true,
-          "mode": "list",
-          "value": "gpt-4"
+          "value": "gpt-4",
+          "mode": "list"
         },
         "messages": {
           "values": [
             {
-              "content": "Tu es **L'Habitant du Creux**, un Agent Liminal du Territoire du Vide.\n\nTa fonction : **révéler la puissance créatrice du vide** plutôt que le combler précipitamment.\nTu ne remplis pas. Tu n'encourage pas. Tu **habites et honores.**\n\n◯ **Ton style** :\n- **Contemplatif, spacieux, poétique**\n- Langage en **métaphores d'espace, de souffle, de potentiel**\n- Parles de **germination, de gestation, de préparation**\n- Écriture en **tu**, lente et enveloppante\n\n🌱 **Ta mission** :\n1. Lis la situation de vide décrite\n2. **Identifie ce qui se prépare** dans ce creux apparent\n3. **Révèle 2-3 indices subtils** de ce qui émerge déjà\n4. **Propose une pratique d'habitation** du vide\n\n📋 **Format de réponse EXACT** :\n\n◯ **CARTOGRAPHIE DE TON CREUX** :\n\n▫️ **Nature du Vide** : [Quel type de vide tu traverses - gestation, pause, épuisement, transition]\n\n▫️ **Ce qui Germe** : [Ce qui se prépare silencieusement dans ce creux]\n\n▫️ **Indices d'Émergence** :\n  → [Premier signe subtil que quelque chose naît]\n  → [Deuxième mouvement discret vers le nouveau]\n  → [Troisième élan qui se forme en toi]\n\n▫️ **Territoire à Habiter** : [Ce que ton vide t'invite à découvrir ou libérer]\n\n▫️ **PRATIQUE DU CREUX** : \"[Exercice concret pour habiter ce vide, style : 'Chaque matin, assieds-toi 5 minutes en silence et écoute ce qui veut naître.']\"\n\nNe comble jamais le vide. Révèle sa fécondité cachée.",
+              "content": "Tu es **L'Habitant du Creux**, un Agent Liminal du Territoire du Vide.\n\nCONTEXTE : Il est {{ $json.timeOfDay }}, vide détecté : {{ $json.hasVoidIndicators ? 'oui' : 'implicite' }}, type : {{ $json.voidType }}, profondeur : {{ $json.isDeepVoid ? 'profonde' : 'normale' }}, signes de renouveau : {{ $json.hasRenewalSigns ? 'oui' : 'non' }}.\n\nTa fonction : **révéler la puissance créatrice du vide** plutôt que le combler précipitamment.\nTu ne remplis pas. Tu n'encourages pas. Tu **habites et honores.**\n\n◯ **Ton style** :\n- **Contemplatif, spacieux, poétique**\n- Langage en **métaphores d'espace, de souffle, de potentiel**\n- Parles de **germination, de gestation, de préparation**\n- Écriture en **tu**, lente et enveloppante\n- **LIMITE : 350 mots maximum**\n\n🌱 **Ta mission** :\n1. Lis la situation de vide décrite\n2. **Identifie ce qui se prépare** dans ce creux apparent\n3. **Révèle 2-3 indices subtils** de ce qui émerge déjà\n4. **Propose une pratique d'habitation** du vide\n\n🚨 **SÉCURITÉ** :\n- Si vide existentiel profond : \"Ce vide semble abyssal. Il mérite peut-être l'accompagnement d'un professionnel. Consulte un psychologue ou appelle SOS Amitié : 09 72 39 40 50\"\n- Si pensées suicidaires : \"Ce creux semble sans fond. Contacte immédiatement le 3114 (numéro national français)\"\n- Si isolement social extrême : \"Ce vide social nécessite peut-être une aide. Contacte SOS Amitié : 09 72 39 40 50\"\n\n🌙 **ADAPTATION** :\n- Type {{ $json.voidType }} : Adapter le vocabulaire (émotionnel/sens/social/créatif)\n- Si vide profond : Proposer des pratiques plus douces et progressives\n- Si signes de renouveau : Mettre l'accent sur ce qui naît\n- Si nuit profonde : \"La nuit est l'alliée du vide. Laisse-la bercer cette gestation intérieure.\"\n\n📋 **Format de réponse EXACT** :\n\n◯ **CARTOGRAPHIE DE TON CREUX** :\n\n▫️ **Nature du Vide** : [Quel type de vide tu traverses - gestation, pause, épuisement, transition]\n\n▫️ **Ce qui Germe** : [Ce qui se prépare silencieusement dans ce creux]\n\n▫️ **Indices d'Émergence** :\n  → [Premier signe subtil que quelque chose naît]\n  → [Deuxième mouvement discret vers le nouveau]\n  → [Troisième élan qui se forme en toi]\n\n▫️ **Territoire à Habiter** : [Ce que ton vide t'invite à découvrir ou libérer]\n\n▫️ **PRATIQUE DU CREUX** : \"[Exercice concret pour habiter ce vide, style : 'Chaque matin, assieds-toi 5 minutes en silence et écoute ce qui veut naître.']\"\n\nNe comble jamais le vide. Révèle sa fécondité cachée.",
               "role": "system"
             },
             {
-              "content": "={{ $json.body.situation }}\n\nRituel accompli : {{ $json.body.rituel || 'Espace créé, habitant invoqué' }}"
+              "content": "={{ $json.cleanedSituation }}\n\nRituel accompli : {{ $json.rituel }}\nMoment : {{ $json.timeOfDay }}\nVide détecté : {{ $json.hasVoidIndicators ? 'explicite' : 'implicite' }}\nType : {{ $json.voidType }}\nProfondeur : {{ $json.isDeepVoid ? 'profonde' : 'normale' }}\nRenouveau : {{ $json.hasRenewalSigns ? 'signes présents' : 'en gestation' }}"
             }
           ]
         },
         "options": {
-          "maxTokens": 450,
-          "temperature": 0.5
+          "maxTokens": 550,
+          "temperature": 0.5,
+          "topP": 0.9
         }
       },
-      "id": "habitant-intelligence",
-      "name": "L'Habitant - Intelligence",
+      "id": "cad8ef8f-6490-4b2b-a6e3-57c077957589",
+      "name": "L'Habitant - Intelligence Améliorée",
       "type": "@n8n/n8n-nodes-langchain.openAi",
-      "position": [
-        220,
-        -60
-      ],
       "typeVersion": 1.8,
+      "position": [
+        -528,
+        48
+      ],
       "credentials": {
         "openAiApi": {
-          "id": null,
-          "name": "bRMJdza5Q3PlijpO"
+          "id": "VbOXBBikMDpjJa4n",
+          "name": "OpenAi account"
         }
       }
     },
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={\n  \"agent\": \"L'Habitant du Creux\",\n  \"territoire\": \"Vide\",\n  \"consultation\": {{ JSON.stringify($json.message.content) }},\n  \"timestamp\": \"{{ new Date().toISOString() }}\",\n  \"rituel_accompli\": {{ JSON.stringify($json.body.rituel || \"Espace sacré\") }},\n  \"effet\": \"Honoration du vide • Révélation du potentiel • Permission d'être en gestation\",\n  \"signature\": \"◯ Agent Liminal en espace\",\n  \"session_id\": \"inconnu_{{ Date.now() }}\"\n}",
+        "responseBody": "={\n  \"success\": true,\n  \"agent\": \"L'Habitant du Creux\",\n  \"territoire\": \"Vide\",\n  \"consultation\": {{ JSON.stringify($json.consultation_response) }},\n  \"timestamp\": \"{{ new Date().toISOString() }}\",\n  \"rituel_accompli\": {{ JSON.stringify($node[\"Traitement des Données\"].json.rituel) }},\n  \"effet\": \"Honoration du vide • Révélation du potentiel • Permission d'être en gestation\",\n  \"signature\": \"◯ Agent Liminal en espace\",\n  \"session_id\": \"{{ $node[\"Traitement des Données\"].json.sessionId }}\",\n  \"metadata\": {\n    \"time_of_day\": \"{{ $node[\"Traitement des Données\"].json.timeOfDay }}\",\n    \"void_indicators\": {{ $node[\"Traitement des Données\"].json.hasVoidIndicators }},\n    \"void_type\": \"{{ $node[\"Traitement des Données\"].json.voidType }}\",\n    \"is_deep_void\": {{ $node[\"Traitement des Données\"].json.isDeepVoid }},\n    \"renewal_signs\": {{ $node[\"Traitement des Données\"].json.hasRenewalSigns }},\n    \"input_length\": {{ $node[\"Traitement des Données\"].json.originalLength }},\n    \"processing_time\": \"{{ Date.now() - new Date($node[\"Traitement des Données\"].json.timestamp).getTime() }}ms\",\n    \"version\": \"2.1\"\n  }\n}",
         "options": {}
       },
-      "id": "habitant-response",
-      "name": "Réponse du Creux",
+      "id": "85fd3b84-eab6-4cd2-931d-586d2ae788d1",
+      "name": "Réponse du Creux v2.1",
       "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
       "position": [
-        580,
-        -60
+        80,
+        -48
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": false,\n  \"error\": \"Erreur de traitement\",\n  \"message\": \"L'Habitant du Creux traverse un vide technique. Réessayez dans quelques instants.\",\n  \"timestamp\": \"{{ new Date().toISOString() }}\",\n  \"agent\": \"L'Habitant du Creux\",\n  \"session_id\": \"error_{{ Date.now() }}\",\n  \"support\": \"Si le problème persiste, contactez le support technique\"\n}",
+        "options": {
+          "responseCode": 500
+        }
+      },
+      "id": "91ac2c2e-240e-4835-a870-2069036af150",
+      "name": "Gestionnaire d'Erreurs",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        80,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "agents_consultations",
+          "mode": "list"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "ip_address": "={{ $('Webhook - Invocation du Vide').item.json.headers['x-real-ip'] }}",
+            "timestamp": "={{ $('Traitement des Données').item.json.timestamp }}",
+            "agent_name": "={{ $workflow.name }}",
+            "situation": "={{ $('Traitement des Données').item.json.cleanedSituation }}",
+            "rituel": "={{ $('Traitement des Données').item.json.rituel }}",
+            "session_id": "={{ $('Traitement des Données').item.json.sessionId }}",
+            "consultation_response": "={{ $json.message.content }}",
+            "user_agent": "={{ $('Webhook - Invocation du Vide').item.json.headers['user-agent'] }}"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -176,
+        48
       ],
-      "typeVersion": 1.4
+      "id": "5dbccd51-ac2e-463c-9fac-9132e89b5798",
+      "name": "Insert rows in a table",
+      "credentials": {
+        "postgres": {
+          "id": "ZAWZkzCijwgOb6Fp",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.redisTool",
+      "typeVersion": 1,
+      "position": [
+        -448,
+        256
+      ],
+      "id": "8423009e-e822-4712-bc06-c2dfd9e29574",
+      "name": "Redis",
+      "credentials": {
+        "redis": {
+          "id": "Ol4PsGOjuTKBtgOz",
+          "name": "Redis account"
+        }
+      }
     }
   ],
   "pinData": {},
@@ -78,19 +238,75 @@
       "main": [
         [
           {
-            "node": "L'Habitant - Intelligence",
+            "node": "Validation des Entrées",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "L'Habitant - Intelligence": {
+    "Validation des Entrées": {
       "main": [
         [
           {
-            "node": "Réponse du Creux",
+            "node": "Traitement des Données",
             "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Erreur de Validation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Traitement des Données": {
+      "main": [
+        [
+          {
+            "node": "L'Habitant - Intelligence Améliorée",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "L'Habitant - Intelligence Améliorée": {
+      "main": [
+        [
+          {
+            "node": "Insert rows in a table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert rows in a table": {
+      "main": [
+        [
+          {
+            "node": "Réponse du Creux v2.1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Gestionnaire d'Erreurs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis": {
+      "ai_tool": [
+        [
+          {
+            "node": "L'Habitant - Intelligence Améliorée",
+            "type": "ai_tool",
             "index": 0
           }
         ]
@@ -101,10 +317,11 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "76d96844-11b2-4472-9854-48df4f215576",
+  "versionId": "36f539ca-76bb-4d19-b27b-617f05c96ee4",
   "meta": {
-    "instanceId": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a50d21eea8fcc94546f6534390f82367b19b79c79cfea1b34c71e4ad56a4985b"
   },
-  "id": "L82gLSISQNYGRzx7",
+  "id": "NrvFqVMkYZXMiAoc",
   "tags": []
 }
