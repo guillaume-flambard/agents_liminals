@@ -60,3 +60,4 @@ archive/
 .env.local
 init.sql
 docker-compose.dev.yml
+package-lock.json
