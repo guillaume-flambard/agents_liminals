@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { AuthService } from '@/lib/auth';
+import { UserLogin } from '@/types/user';
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,31 +21,52 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Pour le développement, accepter n'importe quel login valide
-    console.log('Connexion réussie pour:', { loginIdentifier });
+    // Authentifier l'utilisateur
+    const userSession = await AuthService.authenticateUser({ 
+      email: loginIdentifier, 
+      password 
+    });
 
-    const user = {
-      id: 1,
-      email: email || `${username}@demo.com`, // Générer un email si connexion par username
-      name: username || 'Utilisateur Demo',
-      isAuthenticated: true,
-      lastLogin: new Date().toISOString()
-    };
+    if (!userSession) {
+      return NextResponse.json(
+        { success: false, error: 'Identifiants invalides' },
+        { status: 401 }
+      );
+    }
+
+    console.log('Connexion réussie pour:', { loginIdentifier });
 
     // Structure de réponse compatible avec api-client
     return NextResponse.json({
       success: true,
       message: 'Connexion réussie',
       data: {
-        user,
-        token: 'demo-jwt-token-' + Date.now()
+        user: {
+          id: userSession.id,
+          email: userSession.email,
+          name: userSession.name,
+          isAuthenticated: userSession.isAuthenticated,
+          lastLogin: new Date().toISOString()
+        },
+        token: 'demo-jwt-token-' + userSession.id
       }
     });
     
   } catch (error) {
     console.error('Erreur auth/login:', error);
+    
+    // Gestion des erreurs spécifiques
+    if (error instanceof Error) {
+      if (error.message.includes('désactivé')) {
+        return NextResponse.json(
+          { success: false, error: 'Compte désactivé' },
+          { status: 403 }
+        );
+      }
+    }
+
     return NextResponse.json(
-      { success: false, error: 'Erreur serveur' },
+      { success: false, error: 'Erreur lors de la connexion' },
       { status: 500 }
     );
   }

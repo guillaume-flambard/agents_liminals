@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { AuthService } from '@/lib/auth';
+import { UserCreate } from '@/types/user';
 
 export async function POST(request: NextRequest) {
   try {
@@ -36,31 +38,46 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Pour le développement, simuler un enregistrement réussi
-    console.log('Inscription réussie pour:', { email, displayName });
+    // Créer l'utilisateur dans la base de données
+    const user = await AuthService.createUser({ 
+      email, 
+      name: displayName, 
+      password 
+    });
 
-    const newUser = {
-      id: Date.now(),
-      email,
-      name: displayName,
-      isAuthenticated: true,
-      createdAt: new Date().toISOString()
-    };
+    console.log('Inscription réussie pour:', { email, displayName });
 
     // Structure de réponse compatible avec api-client
     return NextResponse.json({
       success: true,
       message: 'Compte créé avec succès',
       data: {
-        user: newUser,
-        token: 'demo-jwt-token-' + Date.now()
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          isAuthenticated: true,
+          createdAt: user.created_at
+        },
+        token: 'demo-jwt-token-' + user.id
       }
     });
     
   } catch (error) {
     console.error('Erreur auth/register:', error);
+    
+    // Gestion des erreurs spécifiques
+    if (error instanceof Error) {
+      if (error.message.includes('existe déjà')) {
+        return NextResponse.json(
+          { success: false, error: 'Un compte avec cet email existe déjà' },
+          { status: 409 }
+        );
+      }
+    }
+
     return NextResponse.json(
-      { success: false, error: 'Erreur serveur' },
+      { success: false, error: 'Erreur lors de la création du compte' },
       { status: 500 }
     );
   }
