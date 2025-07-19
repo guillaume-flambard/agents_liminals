@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import toast, { Toaster } from 'react-hot-toast'
+import { ArrowLeft } from 'lucide-react'
 
 interface User {
   id: number
@@ -58,7 +60,7 @@ export default function ProfilePage() {
 
   const fetchUserStats = async () => {
     try {
-      const response = await fetch('/api/consultations/stats')
+      const response = await fetch('/api/consultations/stats?user=true')
       if (response.ok) {
         const data = await response.json()
         setStats(data.stats)
@@ -81,14 +83,32 @@ export default function ProfilePage() {
         const data = await response.json()
         setUser(data.user)
         setIsEditing(false)
-        alert('Profil mis à jour avec succès')
+        toast.success('Profil mis à jour avec succès', {
+          style: {
+            background: '#0f172a',
+            color: '#e2e8f0',
+            border: '1px solid #334155',
+          },
+        })
       } else {
         const error = await response.json()
-        alert(error.message || 'Erreur lors de la mise à jour')
+        toast.error(error.message || 'Erreur lors de la mise à jour', {
+          style: {
+            background: '#0f172a',
+            color: '#e2e8f0',
+            border: '1px solid #dc2626',
+          },
+        })
       }
     } catch (error) {
       console.error('Erreur:', error)
-      alert('Erreur lors de la mise à jour')
+      toast.error('Erreur lors de la mise à jour', {
+        style: {
+          background: '#0f172a',
+          color: '#e2e8f0',
+          border: '1px solid #dc2626',
+        },
+      })
     }
   }
 
@@ -96,7 +116,13 @@ export default function ProfilePage() {
     e.preventDefault()
     
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      alert('Les mots de passe ne correspondent pas')
+      toast.error('Les mots de passe ne correspondent pas', {
+        style: {
+          background: '#0f172a',
+          color: '#e2e8f0',
+          border: '1px solid #dc2626',
+        },
+      })
       return
     }
 
@@ -111,16 +137,34 @@ export default function ProfilePage() {
       })
 
       if (response.ok) {
-        alert('Mot de passe modifié avec succès')
+        toast.success('Mot de passe modifié avec succès', {
+          style: {
+            background: '#0f172a',
+            color: '#e2e8f0',
+            border: '1px solid #16a34a',
+          },
+        })
         setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' })
         setShowPasswordForm(false)
       } else {
         const error = await response.json()
-        alert(error.message || 'Erreur lors du changement de mot de passe')
+        toast.error(error.message || 'Erreur lors du changement de mot de passe', {
+          style: {
+            background: '#0f172a',
+            color: '#e2e8f0',
+            border: '1px solid #dc2626',
+          },
+        })
       }
     } catch (error) {
       console.error('Erreur:', error)
-      alert('Erreur lors du changement de mot de passe')
+      toast.error('Erreur lors du changement de mot de passe', {
+        style: {
+          background: '#0f172a',
+          color: '#e2e8f0',
+          border: '1px solid #dc2626',
+        },
+      })
     }
   }
 
@@ -135,8 +179,23 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
-        <div className="text-white">Chargement...</div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+        <div className="absolute inset-0 bg-gradient-radial from-blue-900/20 via-transparent to-slate-900"></div>
+        <div className="absolute inset-0">
+          {[...Array(20)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute w-1 h-1 bg-blue-300/40 rounded-full animate-pulse"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+                animationDelay: `${Math.random() * 3}s`,
+                animationDuration: `${2 + Math.random() * 3}s`
+              }}
+            />
+          ))}
+        </div>
+        <div className="relative text-foreground font-serif">Chargement...</div>
       </div>
     )
   }
@@ -146,33 +205,51 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 font-serif">
+      {/* Background cosmique avec étoiles */}
+      <div className="absolute inset-0 bg-gradient-radial from-blue-900/20 via-transparent to-slate-900"></div>
+      <div className="absolute inset-0">
+        {[...Array(50)].map((_, i) => (
+          <div
+            key={i}
+            className="absolute w-1 h-1 bg-blue-300/40 rounded-full animate-pulse"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 3}s`,
+              animationDuration: `${2 + Math.random() * 3}s`
+            }}
+          />
+        ))}
+      </div>
+      
+      <div className="relative container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
-          <div className="bg-black/20 backdrop-blur-sm rounded-lg p-6 mb-6">
+          <div className="bg-card/60 backdrop-blur-md rounded-lg border border-slate-700/50 p-6 mb-6">
             <div className="flex justify-between items-center">
               <div>
-                <h1 className="text-3xl font-bold text-white mb-2">Mon Profil</h1>
-                <p className="text-purple-200">Gérez vos informations personnelles</p>
+                <h1 className="text-3xl font-bold text-foreground mb-2">Profil de l'Observateur</h1>
+                <p className="text-foreground/70">Vos informations dans l'Observatoire des Liminals</p>
               </div>
               <button
                 onClick={() => router.push('/')}
-                className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors"
+                className="bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 px-4 py-2 rounded-lg transition-all duration-300 hover:scale-105 flex items-center gap-2"
               >
-                Retour à l'accueil
+                <ArrowLeft className="w-4 h-4" />
+                Retour à l'Observatoire
               </button>
             </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Informations du profil */}
-            <div className="lg:col-span-2 bg-black/20 backdrop-blur-sm rounded-lg p-6">
+            <div className="lg:col-span-2 bg-card/60 backdrop-blur-md rounded-lg border border-slate-700/50 p-6">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-semibold text-white">Informations personnelles</h2>
+                <h2 className="text-xl font-semibold text-foreground">Informations Personnelles</h2>
                 <button
                   onClick={() => setIsEditing(!isEditing)}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+                  className="bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 px-4 py-2 rounded-lg transition-all duration-300 hover:scale-105"
                 >
                   {isEditing ? 'Annuler' : 'Modifier'}
                 </button>
@@ -181,36 +258,36 @@ export default function ProfilePage() {
               {isEditing ? (
                 <form onSubmit={handleUpdateProfile} className="space-y-4">
                   <div>
-                    <label className="block text-purple-200 mb-2">Nom</label>
+                    <label className="block text-foreground/70 mb-2">Nom</label>
                     <input
                       type="text"
                       value={editForm.name}
                       onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                      className="w-full bg-white/10 border border-purple-300/30 rounded-lg px-4 py-2 text-white placeholder-purple-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      className="w-full bg-background/50 border border-slate-600/50 rounded-lg px-4 py-2 text-foreground placeholder-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 backdrop-blur-sm"
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-purple-200 mb-2">Email</label>
+                    <label className="block text-foreground/70 mb-2">Email</label>
                     <input
                       type="email"
                       value={editForm.email}
                       onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                      className="w-full bg-white/10 border border-purple-300/30 rounded-lg px-4 py-2 text-white placeholder-purple-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      className="w-full bg-background/50 border border-slate-600/50 rounded-lg px-4 py-2 text-foreground placeholder-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 backdrop-blur-sm"
                       required
                     />
                   </div>
-                  <div className="flex space-x-4">
+                  <div className="flex flex-wrap gap-3">
                     <button
                       type="submit"
-                      className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors"
+                      className="bg-green-600/20 hover:bg-green-600/30 text-green-400 border border-green-600/30 px-6 py-2 rounded-lg transition-all duration-300 hover:scale-105"
                     >
                       Sauvegarder
                     </button>
                     <button
                       type="button"
                       onClick={() => setIsEditing(false)}
-                      className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg transition-colors"
+                      className="bg-slate-600/20 hover:bg-slate-600/30 text-slate-400 border border-slate-600/30 px-6 py-2 rounded-lg transition-all duration-300 hover:scale-105"
                     >
                       Annuler
                     </button>
@@ -219,16 +296,16 @@ export default function ProfilePage() {
               ) : (
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-purple-200 mb-1">Nom</label>
-                    <p className="text-white text-lg">{user.name}</p>
+                    <label className="block text-foreground/70 mb-1">Nom</label>
+                    <p className="text-foreground text-lg">{user.name}</p>
                   </div>
                   <div>
-                    <label className="block text-purple-200 mb-1">Email</label>
-                    <p className="text-white text-lg">{user.email}</p>
+                    <label className="block text-foreground/70 mb-1">Email</label>
+                    <p className="text-foreground text-lg">{user.email}</p>
                   </div>
                   <div>
-                    <label className="block text-purple-200 mb-1">Membre depuis</label>
-                    <p className="text-white text-lg">
+                    <label className="block text-foreground/70 mb-1">Observateur depuis</label>
+                    <p className="text-foreground text-lg">
                       {new Date(user.created_at).toLocaleDateString('fr-FR', {
                         year: 'numeric',
                         month: 'long',
@@ -237,8 +314,8 @@ export default function ProfilePage() {
                     </p>
                   </div>
                   <div>
-                    <label className="block text-purple-200 mb-1">Dernière connexion</label>
-                    <p className="text-white text-lg">
+                    <label className="block text-foreground/70 mb-1">Dernière observation</label>
+                    <p className="text-foreground text-lg">
                       {user.last_login_at 
                         ? new Date(user.last_login_at).toLocaleDateString('fr-FR', {
                             year: 'numeric',
@@ -247,7 +324,7 @@ export default function ProfilePage() {
                             hour: '2-digit',
                             minute: '2-digit'
                           })
-                        : 'Jamais'
+                        : 'Première visite'
                       }
                     </p>
                   </div>
@@ -256,101 +333,102 @@ export default function ProfilePage() {
             </div>
 
             {/* Statistiques */}
-            <div className="bg-black/20 backdrop-blur-sm rounded-lg p-6">
-              <h2 className="text-xl font-semibold text-white mb-6">Mes Statistiques</h2>
+            <div className="bg-card/60 backdrop-blur-md rounded-lg border border-slate-700/50 p-6">
+              <h2 className="text-xl font-semibold text-foreground mb-6">Observations & Interactions</h2>
               {stats ? (
                 <div className="space-y-4">
-                  <div className="bg-purple-600/30 rounded-lg p-4">
-                    <div className="text-2xl font-bold text-white">{stats.totalConsultations}</div>
-                    <div className="text-purple-200">Consultations totales</div>
+                  <div className="bg-blue-600/20 border border-blue-600/30 rounded-lg p-4 transition-all duration-300 hover:bg-blue-600/30">
+                    <div className="text-2xl font-bold text-blue-300">{stats.totalConsultations}</div>
+                    <div className="text-foreground/70">Interactions totales</div>
                   </div>
-                  <div className="bg-blue-600/30 rounded-lg p-4">
-                    <div className="text-2xl font-bold text-white">{stats.consultationsThisMonth}</div>
-                    <div className="text-purple-200">Ce mois-ci</div>
+                  <div className="bg-cyan-600/20 border border-cyan-600/30 rounded-lg p-4 transition-all duration-300 hover:bg-cyan-600/30">
+                    <div className="text-2xl font-bold text-cyan-300">{stats.consultationsThisMonth}</div>
+                    <div className="text-foreground/70">Ce cycle lunaire</div>
                   </div>
                   {stats.favoriteAgent && (
-                    <div className="bg-indigo-600/30 rounded-lg p-4">
-                      <div className="text-lg font-bold text-white">{stats.favoriteAgent}</div>
-                      <div className="text-purple-200">Agent favori</div>
+                    <div className="bg-primary/20 border border-primary/30 rounded-lg p-4 transition-all duration-300 hover:bg-primary/30">
+                      <div className="text-lg font-bold text-primary">{stats.favoriteAgent}</div>
+                      <div className="text-foreground/70">Agent de prédilection</div>
                     </div>
                   )}
                   {stats.lastConsultation && (
-                    <div className="bg-green-600/30 rounded-lg p-4">
-                      <div className="text-sm font-medium text-white">
+                    <div className="bg-slate-600/20 border border-slate-600/30 rounded-lg p-4 transition-all duration-300 hover:bg-slate-600/30">
+                      <div className="text-sm font-medium text-slate-300">
                         {new Date(stats.lastConsultation).toLocaleDateString('fr-FR')}
                       </div>
-                      <div className="text-purple-200">Dernière consultation</div>
+                      <div className="text-foreground/70">Dernière connexion</div>
                     </div>
                   )}
                 </div>
               ) : (
-                <div className="text-purple-200">Aucune statistique disponible</div>
+                <div className="text-foreground/70">Aucune observation enregistrée</div>
               )}
             </div>
           </div>
 
           {/* Sécurité */}
-          <div className="bg-black/20 backdrop-blur-sm rounded-lg p-6 mt-6">
-            <h2 className="text-xl font-semibold text-white mb-6">Sécurité</h2>
-            <div className="space-y-4">
+          <div className="bg-card/60 backdrop-blur-md rounded-lg border border-slate-700/50 p-6 mt-6">
+            <h2 className="text-xl font-semibold text-foreground mb-6">Sécurité & Session</h2>
+            <div className="space-y-3">
               <button
                 onClick={() => setShowPasswordForm(!showPasswordForm)}
-                className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-2 rounded-lg transition-colors"
+                className="bg-orange-600/20 hover:bg-orange-600/30 text-orange-400 border border-orange-600/30 px-6 py-2 rounded-lg transition-all duration-300 hover:scale-105"
               >
-                {showPasswordForm ? 'Annuler' : 'Changer le mot de passe'}
+                {showPasswordForm ? 'Annuler' : 'Modifier les Codes d\'Accès'}
               </button>
 
               {showPasswordForm && (
                 <form onSubmit={handleChangePassword} className="space-y-4 mt-4">
                   <div>
-                    <label className="block text-purple-200 mb-2">Mot de passe actuel</label>
+                    <label className="block text-foreground/70 mb-2">Code d'accès actuel</label>
                     <input
                       type="password"
                       value={passwordForm.currentPassword}
                       onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
-                      className="w-full bg-white/10 border border-purple-300/30 rounded-lg px-4 py-2 text-white placeholder-purple-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      className="w-full bg-background/50 border border-slate-600/50 rounded-lg px-4 py-2 text-foreground placeholder-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 backdrop-blur-sm"
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-purple-200 mb-2">Nouveau mot de passe</label>
+                    <label className="block text-foreground/70 mb-2">Nouveau code d'accès</label>
                     <input
                       type="password"
                       value={passwordForm.newPassword}
                       onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
-                      className="w-full bg-white/10 border border-purple-300/30 rounded-lg px-4 py-2 text-white placeholder-purple-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      className="w-full bg-background/50 border border-slate-600/50 rounded-lg px-4 py-2 text-foreground placeholder-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 backdrop-blur-sm"
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-purple-200 mb-2">Confirmer le nouveau mot de passe</label>
+                    <label className="block text-foreground/70 mb-2">Confirmer le nouveau code</label>
                     <input
                       type="password"
                       value={passwordForm.confirmPassword}
                       onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
-                      className="w-full bg-white/10 border border-purple-300/30 rounded-lg px-4 py-2 text-white placeholder-purple-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      className="w-full bg-background/50 border border-slate-600/50 rounded-lg px-4 py-2 text-foreground placeholder-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 backdrop-blur-sm"
                       required
                     />
                   </div>
                   <button
                     type="submit"
-                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors"
+                    className="bg-green-600/20 hover:bg-green-600/30 text-green-400 border border-green-600/30 px-6 py-2 rounded-lg transition-all duration-300 hover:scale-105"
                   >
-                    Changer le mot de passe
+                    Actualiser les Codes
                   </button>
                 </form>
               )}
 
               <button
                 onClick={handleLogout}
-                className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg transition-colors"
+                className="bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-600/30 px-6 py-2 rounded-lg transition-all duration-300 hover:scale-105"
               >
-                Se déconnecter
+                Quitter l'Observatoire
               </button>
             </div>
           </div>
         </div>
       </div>
+      <Toaster position="top-center" />
     </div>
   )
 }

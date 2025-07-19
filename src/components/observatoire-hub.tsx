@@ -7,6 +7,7 @@ import { useAuth } from '@/lib/auth/auth-provider';
 import { Button } from '@/components/ui/button';
 import { UserProfile } from '@/components/user-profile';
 import { ConsultationHistory } from '@/components/consultation-history';
+import Link from 'next/link';
 
 interface Agent {
   name: string;
@@ -468,15 +469,16 @@ export function ObservatoireHub() {
         >
           📚 Historique
         </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setCurrentView('profile')}
-          className="text-slate-300 hover:text-white"
-        >
-          <User className="h-4 w-4 mr-2" />
-          {user?.username}
-        </Button>
+        <Link href="/profile">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-slate-300 hover:text-white"
+          >
+            <User className="h-4 w-4 mr-2" />
+            {user?.username}
+          </Button>
+        </Link>
         <Button
           variant="ghost"
           size="sm"

@@ -2,15 +2,23 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
   try {
-    // Pour le développement, simuler une déconnexion réussie
-    // En production, ceci invaliderait le token/session
-    
     console.log('Déconnexion utilisateur');
 
-    return NextResponse.json({
+    // Créer la réponse
+    const response = NextResponse.json({
       success: true,
       message: 'Déconnexion réussie'
     });
+
+    // Supprimer le cookie d'authentification
+    response.cookies.set('auth-token', '', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 0 // Expire immédiatement
+    });
+
+    return response;
     
   } catch (error) {
     console.error('Erreur auth/logout:', error);

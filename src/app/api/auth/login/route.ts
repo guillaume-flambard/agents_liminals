@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AuthService } from '@/lib/auth';
+import { JWTService } from '@/lib/jwt';
 import { UserLogin } from '@/types/user';
 
 export async function POST(request: NextRequest) {
@@ -36,8 +37,15 @@ export async function POST(request: NextRequest) {
 
     console.log('Connexion réussie pour:', { loginIdentifier });
 
-    // Structure de réponse compatible avec api-client
-    return NextResponse.json({
+    // Générer un vrai token JWT
+    const token = JWTService.generateToken({
+      userId: userSession.id,
+      email: userSession.email,
+      name: userSession.name
+    });
+
+    // Créer la réponse avec le token dans un cookie sécurisé
+    const response = NextResponse.json({
       success: true,
       message: 'Connexion réussie',
       data: {
@@ -48,9 +56,19 @@ export async function POST(request: NextRequest) {
           isAuthenticated: userSession.isAuthenticated,
           lastLogin: new Date().toISOString()
         },
-        token: 'demo-jwt-token-' + userSession.id
+        token
       }
     });
+
+    // Définir le cookie d'authentification
+    response.cookies.set('auth-token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 // 7 jours
+    });
+
+    return response;
     
   } catch (error) {
     console.error('Erreur auth/login:', error);

@@ -47,11 +47,11 @@ export class AuthService {
     const { email, password } = credentials;
 
     try {
-      // Récupérer l'utilisateur avec le mot de passe
+      // Récupérer l'utilisateur avec le mot de passe (recherche par email ou name)
       const query = `
         SELECT id, email, name, password_hash, is_active
         FROM users 
-        WHERE email = $1
+        WHERE email = $1 OR name = $1
       `;
       
       const result = await pool.query(query, [email]);
@@ -193,6 +193,108 @@ export class AuthService {
     } catch (error) {
       console.error('Erreur lors de la réactivation de l\'utilisateur:', error);
       return false;
+    }
+  }
+
+  // Changer le mot de passe d'un utilisateur
+  static async changePassword(userId: number, newPassword: string): Promise<boolean> {
+    const passwordHash = await this.hashPassword(newPassword);
+    
+    const query = `
+      UPDATE users 
+      SET password_hash = $1, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $2
+    `;
+
+    try {
+      const result = await pool.query(query, [passwordHash, userId]);
+      return result.rowCount !== null && result.rowCount > 0;
+    } catch (error) {
+      console.error('Erreur lors du changement de mot de passe:', error);
+      return false;
+    }
+  }
+
+  // Récupérer un utilisateur avec son mot de passe pour vérification
+  static async getUserByIdWithPassword(id: number): Promise<(User & { password_hash: string }) | null> {
+    const query = `
+      SELECT id, email, name, password_hash, created_at, updated_at, last_login_at, is_active
+      FROM users 
+      WHERE id = $1 AND is_active = true
+    `;
+
+    try {
+      const result = await pool.query(query, [id]);
+      return result.rows[0] || null;
+    } catch (error) {
+      console.error('Erreur lors de la récupération de l\'utilisateur avec mot de passe:', error);
+      return null;
+    }
+  }
+
+  // Obtenir les statistiques d'un utilisateur
+  static async getUserStats(userId: number): Promise<{
+    totalConsultations: number;
+    consultationsThisMonth: number;
+    favoriteAgent: string | null;
+    lastConsultation: string | null;
+  }> {
+    try {
+      // Total des consultations
+      const totalQuery = `
+        SELECT COUNT(*) as total
+        FROM agents_consultations 
+        WHERE user_id = $1
+      `;
+      const totalResult = await pool.query(totalQuery, [userId]);
+      const totalConsultations = parseInt(totalResult.rows[0].total);
+
+      // Consultations ce mois-ci
+      const monthQuery = `
+        SELECT COUNT(*) as total
+        FROM agents_consultations 
+        WHERE user_id = $1 AND DATE_TRUNC('month', timestamp) = DATE_TRUNC('month', CURRENT_DATE)
+      `;
+      const monthResult = await pool.query(monthQuery, [userId]);
+      const consultationsThisMonth = parseInt(monthResult.rows[0].total);
+
+      // Agent favori
+      const favoriteQuery = `
+        SELECT agent_name, COUNT(*) as count
+        FROM agents_consultations 
+        WHERE user_id = $1
+        GROUP BY agent_name
+        ORDER BY count DESC
+        LIMIT 1
+      `;
+      const favoriteResult = await pool.query(favoriteQuery, [userId]);
+      const favoriteAgent = favoriteResult.rows[0]?.agent_name || null;
+
+      // Dernière consultation
+      const lastQuery = `
+        SELECT timestamp
+        FROM agents_consultations 
+        WHERE user_id = $1
+        ORDER BY timestamp DESC
+        LIMIT 1
+      `;
+      const lastResult = await pool.query(lastQuery, [userId]);
+      const lastConsultation = lastResult.rows[0]?.timestamp || null;
+
+      return {
+        totalConsultations,
+        consultationsThisMonth,
+        favoriteAgent,
+        lastConsultation
+      };
+    } catch (error) {
+      console.error('Erreur lors de la récupération des statistiques:', error);
+      return {
+        totalConsultations: 0,
+        consultationsThisMonth: 0,
+        favoriteAgent: null,
+        lastConsultation: null
+      };
     }
   }
 }
