@@ -1,9 +1,10 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { DatabaseService } from '@/lib/database';
 
-// GET /api/consultations/[id – Récupérer une consultation spécifique
+// GET /api/consultations/[id] – Récupérer une consultation spécifique
 export async function GET(
-    { params }: { params: Promise<{ id: string }> }
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const resolvedParams = await params;
