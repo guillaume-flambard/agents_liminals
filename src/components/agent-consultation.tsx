@@ -28,7 +28,7 @@ const agentConfigs: Record<string, AgentConfig> = {
   accordeur: {
     name: 'accordeur',
     displayName: 'L\'Accordeur de Sens',
-    territory: 'Territoire du Flou',
+    territory: 'Agent du Territoire du Flou',
     symptom: 'Je ne comprends pas ce qui m\'arrive, mes émotions sont bizarres, rien ne fait sens, je me sens décalé(e)',
     ritualSteps: [
       'Ferme les yeux pendant 30 secondes',
@@ -151,10 +151,19 @@ export function AgentConsultation({ agentName }: AgentConsultationProps) {
   }, [agentName]);
 
   const onSubmit = async (data: ConsultationForm) => {
+    if (!data.situation.trim()) {
+      toast({
+        title: `⚠️ ${config.displayName} a besoin de matière à analyser`,
+        description: 'Décris ta situation...',
+        type: 'warning',
+      });
+      return;
+    }
+
     if (consultationCount >= maxConsultations) {
       toast({
         title: 'Limite atteinte',
-        description: 'Vous avez atteint votre limite quotidienne de consultations.',
+        description: `🌙 ${config.displayName} respecte les cycles naturels. Reviens demain pour une nouvelle consultation.`,
         type: 'warning',
       });
       return;
@@ -170,24 +179,41 @@ export function AgentConsultation({ agentName }: AgentConsultationProps) {
         rituel,
       });
 
-      setConsultationResponse(response.data.response);
-      
-      // Update consultation count
-      const today = new Date().toDateString();
-      const newCount = consultationCount + 1;
-      localStorage.setItem(`${agentName}_consultations_${today}`, newCount.toString());
-      setConsultationCount(newCount);
+      if (response.data.success) {
+        setConsultationResponse(response.data.data.response);
+        
+        // Update consultation count
+        const today = new Date().toDateString();
+        const newCount = consultationCount + 1;
+        localStorage.setItem(`${agentName}_consultations_${today}`, newCount.toString());
+        setConsultationCount(newCount);
 
-      toast({
-        title: 'Consultation reçue',
-        description: `${config.displayName} a harmonisé votre état`,
-        type: 'success',
-      });
+        toast({
+          title: '✨ Consultation reçue',
+          description: `${config.displayName} a harmonisé votre état`,
+          type: 'success',
+        });
+      } else {
+        throw new Error(response.data.error || 'Erreur lors de la consultation');
+      }
 
     } catch (error) {
+      console.error('Erreur consultation:', error);
+      
+      let errorMessage = 'Une erreur est survenue';
+      if (error instanceof Error) {
+        if (error.message.includes('timeout') || error.message.includes('Timeout')) {
+          errorMessage = `⏰ ${config.displayName} prend plus de temps que prévu. Réessayez dans un moment.`;
+        } else if (error.message.includes('network') || error.message.includes('fetch')) {
+          errorMessage = `🔌 Impossible de contacter ${config.displayName}. Vérifiez votre connexion.`;
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
       toast({
-        title: 'Erreur de consultation',
-        description: error instanceof Error ? error.message : 'Une erreur est survenue',
+        title: '❌ Erreur de consultation',
+        description: errorMessage,
         type: 'error',
       });
     } finally {
